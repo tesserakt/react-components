@@ -6,6 +6,7 @@ import { getContactPublicKeyModel } from 'proton-shared/lib/keys/publicKeys';
 import extractEncryptionPreferences, { EncryptionPreferences } from 'proton-shared/lib/mail/encryptionPreferences';
 import { splitKeys } from 'proton-shared/lib/keys/keys';
 import { ContactEmail } from 'proton-shared/lib/interfaces/contacts';
+import { verifyPublicKeys } from 'key-transparency-web-client';
 import useApi from './useApi';
 import { useGetAddresses } from './useAddresses';
 import { useGetAddressKeys } from './useGetAddressKeys';
@@ -49,6 +50,7 @@ const useGetEncryptionPreferences = () => {
             let selfSend;
             let apiKeysConfig;
             let pinnedKeysConfig;
+            let ktConfig;
             if (selfAddress) {
                 // we do not trust the public keys in ownAddress (they will be deprecated in the API response soon anyway)
                 const selfPublicKey = (await getAddressKeys(selfAddress.ID))[0]?.publicKey;
@@ -67,13 +69,21 @@ const useGetEncryptionPreferences = () => {
                     isInternal,
                     contactEmailsMap
                 );
+                if (mailSettings){// && mailSettings.KT) {
+                    ktConfig = await verifyPublicKeys(
+                        apiKeysConfig.Keys,
+                        emailAddress,
+                        apiKeysConfig.SignedKeyList,
+                        api
+                    );
+                }
             }
             const publicKeyModel = await getContactPublicKeyModel({
                 emailAddress,
                 apiKeysConfig,
                 pinnedKeysConfig,
             });
-            return extractEncryptionPreferences(publicKeyModel, mailSettings, selfSend);
+            return extractEncryptionPreferences(publicKeyModel, mailSettings, selfSend, ktConfig);
         },
         [api, getAddressKeys, getAddresses, getPublicKeys, getMailSettings]
     );
