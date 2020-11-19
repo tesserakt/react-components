@@ -25,6 +25,7 @@ interface Props {
     isModal: boolean;
     onDelete: () => void;
     onReload?: () => void;
+    onResign?: () => Promise<void>;
     isPreview?: boolean;
 }
 
@@ -39,6 +40,7 @@ const ContactView = ({
     isModal,
     onDelete,
     onReload,
+    onResign,
     isPreview = false,
 }: Props) => {
     const { createModal } = useModals();
@@ -67,7 +69,8 @@ const ContactView = ({
 
     return (
         <div className={classnames([!isModal && 'view-column-detail flex-item-fluid scroll-if-needed'])}>
-            <div className="border-bottom m1">
+            <div className="border-bottom m1 pb1">
+                <ContactViewErrors errors={errors} onReload={onReload} onResign={onResign} />
                 <ContactSummary
                     onExport={handleExport}
                     onEdit={handleEdit}
@@ -75,8 +78,8 @@ const ContactView = ({
                     properties={properties}
                     leftBlockWidth={isNarrow ? 'mauto mw100p' : 'w100 mw100p'}
                     isPreview={isPreview}
+                    hasError={!!errors?.length}
                 />
-                <ContactViewErrors errors={errors} onReload={onReload} />
             </div>
             <div className="pl1 pr1">
                 <ContactViewProperties field="fn" {...contactViewPropertiesProps} />
