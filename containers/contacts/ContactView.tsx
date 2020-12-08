@@ -77,7 +77,7 @@ const ContactView = ({
                     isPreview={isPreview}
                     hasError={hasError}
                 />
-                <ContactViewErrors errors={errors} onReload={onReload} />
+                <ContactViewErrors errors={errors} onReload={onReload} contactID={contactID} />
             </div>
             <div className="pl1 pr1">
                 <ContactViewProperties field="fn" {...contactViewPropertiesProps} />
