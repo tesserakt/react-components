@@ -6,7 +6,7 @@ import { orderBy } from 'proton-shared/lib/helpers/array';
 import { hasBit } from 'proton-shared/lib/helpers/bitset';
 import { PLAN_SERVICES, PLAN_TYPES, CYCLE, PLANS, ADDON_NAMES, APPS, BLACK_FRIDAY } from 'proton-shared/lib/constants';
 import humanSize from 'proton-shared/lib/helpers/humanSize';
-import { Price, Info, Badge } from '../../../components';
+import { Price, Info, Badge, Time } from '../../../components';
 import { useConfig } from '../../../hooks';
 import { classnames } from '../../../helpers';
 import CycleSelector from '../CycleSelector';
@@ -38,7 +38,7 @@ const CheckoutRow = ({ title, amount = 0, currency, className = '' }) => {
 CheckoutRow.propTypes = {
     className: PropTypes.string,
     title: PropTypes.node.isRequired,
-    amount: PropTypes.number.isRequired,
+    amount: PropTypes.node.isRequired,
     currency: PropTypes.string,
 };
 
@@ -46,27 +46,38 @@ CheckoutRow.propTypes = {
 const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, setModel, checkResult, loading }) => {
     const { APP_NAME } = useConfig();
     const isVPN = APP_NAME === APPS.PROTONVPN_SETTINGS;
-
+    const isUpdating = !!checkResult.Additions; // Additions is present if the user is updating his current configuration by adding add-ons
     const plansMap = toMap(plans);
     const storageAddon = plans.find(({ Name }) => Name === ADDON_NAMES.SPACE);
     const addressAddon = plans.find(({ Name }) => Name === ADDON_NAMES.ADDRESS);
     const domainAddon = plans.find(({ Name }) => Name === ADDON_NAMES.DOMAIN);
     const memberAddon = plans.find(({ Name }) => Name === ADDON_NAMES.MEMBER);
     const vpnAddon = plans.find(({ Name }) => Name === ADDON_NAMES.VPN);
+    const getQuantity = (name, quantity) => {
+        if (isUpdating) {
+            return quantity - (checkResult.Additions[name] || 0);
+        }
+        return quantity;
+    };
     const subTotal =
         getSubTotal({
             cycle: model.cycle,
             plans,
             plansMap: Object.entries(model.planIDs).reduce((acc, [planID, quantity]) => {
                 const { Name } = plansMap[planID];
-                acc[Name] = quantity;
+                if (isUpdating) {
+                    acc[Name] = getQuantity(Name, quantity);
+                } else {
+                    acc[Name] = quantity;
+                }
                 return acc;
             }, {}),
         }) / model.cycle;
-    const total = checkResult.Amount + checkResult.CouponDiscount;
+    const total = checkResult.AmountDue + checkResult.UnusedCredit;
     const totalWithoutDiscount =
         Object.entries(model.planIDs).reduce((acc, [planID, quantity]) => {
-            return acc + plansMap[planID].Pricing[CYCLE.MONTHLY] * quantity;
+            const { Name } = plansMap[planID];
+            return acc + plansMap[planID].Pricing[CYCLE.MONTHLY] * getQuantity(Name, quantity);
         }, 0) * model.cycle;
     const totalDiscount = Math.round((total * 100) / totalWithoutDiscount) - 100;
     const monthlyTotal = total / model.cycle;
@@ -112,25 +123,46 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
         return collection
             .filter(({ Services, quantity }) => hasBit(Services, service) && quantity)
             .map(({ ID, Title, Pricing, Type, Name, quantity }) => {
+                const update = (isUpdating && checkResult.Additions[Name]) || 0;
                 return (
-                    <CheckoutRow
-                        key={ID}
-                        className={Type === PLAN_TYPES.PLAN ? 'bold' : ''}
-                        title={
-                            <>
-                                <span className="mr0-5 pr0-5">
-                                    {Type === PLAN_TYPES.PLAN ? Title : getTitle(Name, quantity)}
-                                </span>
-                                {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) && (
-                                    <span className="nobold">
-                                        <CycleDiscountBadge cycle={model.cycle} />
-                                    </span>
-                                )}
-                            </>
-                        }
-                        amount={(quantity * Pricing[model.cycle]) / model.cycle}
-                        currency={model.currency}
-                    />
+                    <React.Fragment key={ID}>
+                        {quantity - update ? (
+                            <CheckoutRow
+                                className={Type === PLAN_TYPES.PLAN ? 'bold' : ''}
+                                title={
+                                    <>
+                                        <span className="mr0-5 pr0-5">
+                                            {Type === PLAN_TYPES.PLAN ? Title : getTitle(Name, quantity - update)}
+                                        </span>
+                                        {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) && (
+                                            <span className="nobold">
+                                                <CycleDiscountBadge cycle={model.cycle} />
+                                            </span>
+                                        )}
+                                    </>
+                                }
+                                amount={((quantity - update) * Pricing[model.cycle]) / model.cycle}
+                                currency={model.currency}
+                            />
+                        ) : null}
+                        {update ? (
+                            <CheckoutRow
+                                className="color-global-success"
+                                title={
+                                    <>
+                                        <span className="mr0-5 pr0-5">{getTitle(Name, update)}</span>
+                                        {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) && (
+                                            <span className="nobold">
+                                                <CycleDiscountBadge cycle={model.cycle} />
+                                            </span>
+                                        )}
+                                    </>
+                                }
+                                amount={(update * Pricing[model.cycle]) / model.cycle}
+                                currency={model.currency}
+                            />
+                        ) : null}
+                    </React.Fragment>
                 );
             });
     };
@@ -196,6 +228,14 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                     ) : null}
                 </div>
             </div>
+            {isUpdating ? (
+                <div className="rounded p1 mb1 bg-global-highlight">
+                    <div className="flex flex-nowrap flex-spacebetween">
+                        <div className="pr0-5">{c('Title').t`Renewal date`}</div>
+                        <Time>{checkResult.PeriodEnd}</Time>
+                    </div>
+                </div>
+            ) : null}
             {checkResult.Amount ? (
                 <div className="rounded p1 mb1 bg-global-highlight">
                     {model.coupon ? (
@@ -228,21 +268,23 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                 className="bigger mt0 mb0"
                             />
                         ) : null}
-                        <CheckoutRow
-                            className="bigger m0"
-                            title={
-                                <>
-                                    <span className="mr0-5 pr0-5">{c('Title').t`Total`}</span>
-                                    {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
-                                        <span className="bold">
-                                            <Badge type="success">{`${totalDiscount}%`}</Badge>
-                                        </span>
-                                    ) : null}
-                                </>
-                            }
-                            amount={total}
-                            currency={model.currency}
-                        />
+                        {isUpdating ? null : (
+                            <CheckoutRow
+                                className="bigger m0"
+                                title={
+                                    <>
+                                        <span className="mr0-5 pr0-5">{c('Title').t`Total`}</span>
+                                        {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
+                                            <span className="bold">
+                                                <Badge type="success">{`${totalDiscount}%`}</Badge>
+                                            </span>
+                                        ) : null}
+                                    </>
+                                }
+                                amount={total}
+                                currency={model.currency}
+                            />
+                        )}
                     </div>
                     {checkResult.Proration || checkResult.Credit || checkResult.Gift ? (
                         <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
