@@ -73,7 +73,9 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                 return acc;
             }, {}),
         }) / model.cycle;
-    const total = checkResult.AmountDue + checkResult.UnusedCredit;
+    const total = isUpdating
+        ? checkResult.AmountDue + checkResult.UnusedCredit
+        : checkResult.Amount + checkResult.CouponDiscount;
     const totalWithoutDiscount =
         Object.entries(model.planIDs).reduce((acc, [planID, quantity]) => {
             const { Name } = plansMap[planID];
@@ -268,23 +270,21 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                 className="bigger mt0 mb0"
                             />
                         ) : null}
-                        {isUpdating ? null : (
-                            <CheckoutRow
-                                className="bigger m0"
-                                title={
-                                    <>
-                                        <span className="mr0-5 pr0-5">{c('Title').t`Total`}</span>
-                                        {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
-                                            <span className="bold">
-                                                <Badge type="success">{`${totalDiscount}%`}</Badge>
-                                            </span>
-                                        ) : null}
-                                    </>
-                                }
-                                amount={total}
-                                currency={model.currency}
-                            />
-                        )}
+                        <CheckoutRow
+                            className="bigger m0"
+                            title={
+                                <>
+                                    <span className="mr0-5 pr0-5">{c('Title').t`Total`}</span>
+                                    {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
+                                        <span className="bold">
+                                            <Badge type="success">{`${totalDiscount}%`}</Badge>
+                                        </span>
+                                    ) : null}
+                                </>
+                            }
+                            amount={total}
+                            currency={model.currency}
+                        />
                     </div>
                     {checkResult.Proration || checkResult.Credit || checkResult.Gift ? (
                         <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
