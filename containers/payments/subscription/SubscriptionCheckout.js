@@ -244,7 +244,15 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                             className="bigger m0"
                             title={
                                 <>
-                                    <span className="mr0-5 pr0-5">{c('Title').t`Total`}</span>
+                                    {model.cycle === CYCLE.MONTHLY ? (
+                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed monthly`}</span>
+                                    ) : null}
+                                    {model.cycle === CYCLE.YEARLY ? (
+                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed every year`}</span>
+                                    ) : null}
+                                    {model.cycle === CYCLE.TWO_YEARS ? (
+                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed every 2 year`}</span>
+                                    ) : null}
                                     {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
                                         <span className="bold">
                                             <Badge type="success">{`${totalDiscount}%`}</Badge>
@@ -256,8 +264,16 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                             currency={model.currency}
                         />
                     </div>
-                    {checkResult.Proration || checkResult.Credit || checkResult.Gift ? (
+                    {checkResult.Proration || checkResult.Credit || checkResult.Gift || checkResult.UnusedCredit ? (
                         <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
+                            {checkResult.UnusedCredit ? (
+                                <CheckoutRow
+                                    title={c('Label').t`Partial refund`}
+                                    amount={checkResult.UnusedCredit}
+                                    currency={model.currency}
+                                    className="small mt0 mb0"
+                                />
+                            ) : null}
                             {checkResult.Proration ? (
                                 <CheckoutRow
                                     title={
