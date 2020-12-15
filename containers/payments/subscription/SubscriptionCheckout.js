@@ -6,41 +6,15 @@ import { orderBy } from 'proton-shared/lib/helpers/array';
 import { hasBit } from 'proton-shared/lib/helpers/bitset';
 import { PLAN_SERVICES, PLAN_TYPES, CYCLE, PLANS, ADDON_NAMES, APPS, BLACK_FRIDAY } from 'proton-shared/lib/constants';
 import humanSize from 'proton-shared/lib/helpers/humanSize';
-import { Price, Info, Badge, Time } from '../../../components';
+import { Info, Badge, Time } from '../../../components';
 import { useConfig } from '../../../hooks';
-import { classnames } from '../../../helpers';
 import CycleSelector from '../CycleSelector';
 import CurrencySelector from '../CurrencySelector';
 
 import { getSubTotal } from './helpers';
 import CycleDiscountBadge from '../CycleDiscountBadge';
 import DiscountBadge from '../DiscountBadge';
-
-const CheckoutRow = ({ title, amount = 0, currency, className = '' }) => {
-    if (amount === 0 && !currency) {
-        return (
-            <div className={classnames(['flex flex-nowrap flex-spacebetween mb0-5', className])}>
-                <div className="pr0-5">{title}</div>
-                <span className="color-global-success uppercase">{c('Price').t`Free`}</span>
-            </div>
-        );
-    }
-    return (
-        <div className={classnames(['flex flex-nowrap flex-spacebetween mb0-5', className])}>
-            <div className="pr0-5">{title}</div>
-            <Price className={amount < 0 ? 'color-global-success' : ''} currency={currency}>
-                {amount}
-            </Price>
-        </div>
-    );
-};
-
-CheckoutRow.propTypes = {
-    className: PropTypes.string,
-    title: PropTypes.node.isRequired,
-    amount: PropTypes.node.isRequired,
-    currency: PropTypes.string,
-};
+import CheckoutRow from './CheckoutRow';
 
 /** @type any */
 const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, setModel, checkResult, loading }) => {
@@ -136,14 +110,14 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                         <span className="mr0-5 pr0-5">
                                             {Type === PLAN_TYPES.PLAN ? Title : getTitle(Name, quantity - update)}
                                         </span>
-                                        {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) && (
+                                        {!isUpdating && [CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) && (
                                             <span className="nobold">
                                                 <CycleDiscountBadge cycle={model.cycle} />
                                             </span>
                                         )}
                                     </>
                                 }
-                                amount={((quantity - update) * Pricing[model.cycle]) / model.cycle}
+                                amount={isUpdating ? 0 : ((quantity - update) * Pricing[model.cycle]) / model.cycle}
                                 currency={model.currency}
                             />
                         ) : null}
