@@ -29,7 +29,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const vpnAddon = plans.find(({ Name }) => Name === ADDON_NAMES.VPN);
     const getQuantity = (name, quantity) => {
         if (isUpdating) {
-            return quantity - (checkResult.Additions[name] || 0);
+            return checkResult.Additions[name] || 0;
         }
         return quantity;
     };
@@ -39,11 +39,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
             plans,
             plansMap: Object.entries(model.planIDs).reduce((acc, [planID, quantity]) => {
                 const { Name } = plansMap[planID];
-                if (isUpdating) {
-                    acc[Name] = getQuantity(Name, quantity);
-                } else {
-                    acc[Name] = quantity;
-                }
+                acc[Name] = getQuantity(Name, quantity);
                 return acc;
             }, {}),
         }) / model.cycle;
