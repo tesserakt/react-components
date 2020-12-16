@@ -251,7 +251,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                         <span className="mr0-5 pr0-5">{c('Title').t`Billed every year`}</span>
                                     ) : null}
                                     {model.cycle === CYCLE.TWO_YEARS ? (
-                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed every 2 year`}</span>
+                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed every 2 years`}</span>
                                     ) : null}
                                     {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
                                         <span className="bold">
