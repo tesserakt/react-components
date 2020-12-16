@@ -125,7 +125,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                         <span className="mr0-5 pr0-5">{getTitle(Name, update)}</span>
                                         {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) && (
                                             <span className="nobold">
-                                                <CycleDiscountBadge cycle={model.cycle} />
+                                                <Badge type="success">{`${totalDiscount}%`}</Badge>
                                             </span>
                                         )}
                                     </>
