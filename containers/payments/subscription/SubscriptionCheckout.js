@@ -81,8 +81,8 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const hasVpnPlus = collection.some(({ Name }) => Name === PLANS.VPNPLUS);
     const diff = differenceInMilliseconds(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
     const months = Math.floor(diff / MONTH);
-    const days = Math.floor(diff / DAY) || 1;
-    const countdown = [months && c('m means months').t`${months}m`, c('d means days')`${days}d`]
+    const days = Math.floor(months / DAY) || 1;
+    const countdown = [months && c('m means months').t`${months}m`, c('d means days').t`${days}d`]
         .filter(isTruthy)
         .join(' ');
     const totalLabel = isUpdating ? c('Label').t`Total (${countdown})` : c('Label').t`Total`;
@@ -275,7 +275,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                             currency={model.currency}
                         />
                     </div>
-                    {checkResult.Proration || checkResult.Credit || checkResult.Gift || checkResult.UnusedCredit ? (
+                    {checkResult.Proration || checkResult.Credit || checkResult.Gift ? (
                         <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
                             {checkResult.Proration ? (
                                 <CheckoutRow
