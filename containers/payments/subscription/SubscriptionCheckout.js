@@ -56,7 +56,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
             }, {}),
         }) / model.cycle;
     const total = isUpdating
-        ? checkResult.AmountDue - checkResult.UnusedCredit
+        ? checkResult.AmountDue - checkResult.Credit
         : checkResult.Amount + checkResult.CouponDiscount;
     const totalWithoutDiscount =
         Object.entries(model.planIDs).reduce((acc, [planID, quantity]) => {
