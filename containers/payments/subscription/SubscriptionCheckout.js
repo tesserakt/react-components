@@ -4,13 +4,25 @@ import { c, msgid } from 'ttag';
 import { toMap } from 'proton-shared/lib/helpers/object';
 import { orderBy } from 'proton-shared/lib/helpers/array';
 import { hasBit } from 'proton-shared/lib/helpers/bitset';
-import { PLAN_SERVICES, PLAN_TYPES, CYCLE, PLANS, ADDON_NAMES, APPS, BLACK_FRIDAY } from 'proton-shared/lib/constants';
+import {
+    PLAN_SERVICES,
+    PLAN_TYPES,
+    CYCLE,
+    PLANS,
+    ADDON_NAMES,
+    APPS,
+    BLACK_FRIDAY,
+    MONTH,
+    DAY,
+} from 'proton-shared/lib/constants';
 import humanSize from 'proton-shared/lib/helpers/humanSize';
+import { differenceInMilliseconds } from 'date-fns';
+import isTruthy from 'proton-shared/lib/helpers/isTruthy';
+
 import { Info, Badge, Time } from '../../../components';
 import { useConfig } from '../../../hooks';
 import CycleSelector from '../CycleSelector';
 import CurrencySelector from '../CurrencySelector';
-
 import { getSubTotal } from './helpers';
 import CycleDiscountBadge from '../CycleDiscountBadge';
 import DiscountBadge from '../DiscountBadge';
@@ -67,6 +79,13 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const hasVisionary = collection.some(({ Name }) => Name === PLANS.VISIONARY);
     const hasMailPlus = collection.some(({ Name }) => Name === PLANS.PLUS);
     const hasVpnPlus = collection.some(({ Name }) => Name === PLANS.VPNPLUS);
+    const diff = differenceInMilliseconds(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
+    const months = Math.floor(diff / MONTH);
+    const days = Math.floor(diff / DAY) || 1;
+    const countdown = [months && c('m means months').t`${months}m`, c('d means days')`${days}d`]
+        .filter(isTruthy)
+        .join(' ');
+    const totalLabel = isUpdating ? c('Label').t`Total (${countdown})` : c('Label').t`Total`;
 
     const getTitle = (planName, quantity) => {
         const addresses = quantity * addressAddon.MaxAddresses;
@@ -244,15 +263,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                             className="bigger m0"
                             title={
                                 <>
-                                    {model.cycle === CYCLE.MONTHLY ? (
-                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed monthly`}</span>
-                                    ) : null}
-                                    {model.cycle === CYCLE.YEARLY ? (
-                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed every year`}</span>
-                                    ) : null}
-                                    {model.cycle === CYCLE.TWO_YEARS ? (
-                                        <span className="mr0-5 pr0-5">{c('Title').t`Billed every 2 years`}</span>
-                                    ) : null}
+                                    <span className="mr0-5 pr0-5">{totalLabel}</span>
                                     {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
                                         <span className="bold">
                                             <Badge type="success">{`${totalDiscount}%`}</Badge>
@@ -266,14 +277,6 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                     </div>
                     {checkResult.Proration || checkResult.Credit || checkResult.Gift || checkResult.UnusedCredit ? (
                         <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
-                            {checkResult.UnusedCredit ? (
-                                <CheckoutRow
-                                    title={c('Label').t`Partial refund`}
-                                    amount={checkResult.UnusedCredit}
-                                    currency={model.currency}
-                                    className="small mt0 mb0"
-                                />
-                            ) : null}
                             {checkResult.Proration ? (
                                 <CheckoutRow
                                     title={
