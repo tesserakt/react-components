@@ -64,7 +64,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const totalDiscount = Math.ceil(
         ((checkResult.Amount + checkResult.CouponDiscount) * 100) / totalWithoutDiscount - 100
     );
-    const monthlyTotal = checkResult.Amount / model.cycle;
+    const monthlyTotal = (checkResult.Amount + checkResult.CouponDiscount) / model.cycle;
     const discount = monthlyTotal - subTotal;
     const collection = orderBy(
         Object.entries(model.planIDs).map(([planID, quantity]) => ({ ...plansMap[planID], quantity })),
