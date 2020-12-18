@@ -6,10 +6,9 @@ import { orderBy } from 'proton-shared/lib/helpers/array';
 import { hasBit } from 'proton-shared/lib/helpers/bitset';
 import { PLAN_SERVICES, PLAN_TYPES, CYCLE, PLANS, ADDON_NAMES, APPS, BLACK_FRIDAY } from 'proton-shared/lib/constants';
 import humanSize from 'proton-shared/lib/helpers/humanSize';
-import { differenceInDays, differenceInMonths } from 'date-fns';
-import isTruthy from 'proton-shared/lib/helpers/isTruthy';
+import { differenceInMonths } from 'date-fns';
 
-import { Info, Badge, Time } from '../../../components';
+import { Info } from '../../../components';
 import { useConfig } from '../../../hooks';
 import CycleSelector from '../CycleSelector';
 import CurrencySelector from '../CurrencySelector';
@@ -29,13 +28,9 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const domainAddon = plans.find(({ Name }) => Name === ADDON_NAMES.DOMAIN);
     const memberAddon = plans.find(({ Name }) => Name === ADDON_NAMES.MEMBER);
     const vpnAddon = plans.find(({ Name }) => Name === ADDON_NAMES.VPN);
-
     const months = differenceInMonths(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
-    const days = differenceInDays(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
-    const countdown = [months && c('m means months').t`${months}m`, days && c('d means days').t`${days}d`]
-        .filter(isTruthy)
-        .join(' ');
-    const totalLabel = isUpdating ? c('Label').t`Total (${countdown})` : c('Label').t`Total`;
+    const countdown = c('m means months').t`${months}m`;
+    const totalLabel = isUpdating && months ? c('Label').t`Total (${countdown})` : c('Label').t`Total`;
     const getQuantity = (name, quantity) => {
         if (isUpdating) {
             return checkResult.Additions[name] || 0;
@@ -56,14 +51,6 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const total = isUpdating
         ? checkResult.AmountDue - checkResult.Credit
         : checkResult.Amount + checkResult.CouponDiscount;
-    const totalWithoutDiscount =
-        Object.entries(model.planIDs).reduce((acc, [planID, quantity]) => {
-            const { Name } = plansMap[planID];
-            return acc + plansMap[planID].Pricing[CYCLE.MONTHLY] * getQuantity(Name, quantity);
-        }, 0) * model.cycle;
-    const totalDiscount = Math.ceil(
-        ((checkResult.Amount + checkResult.CouponDiscount) * 100) / totalWithoutDiscount - 100
-    );
     const monthlyTotal = (checkResult.Amount + checkResult.CouponDiscount) / model.cycle;
     const discount = monthlyTotal - subTotal;
     const collection = orderBy(
@@ -171,8 +158,12 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                 />
             </div>
             <div className="rounded mb1">
-                <header className="small mt0 mb0 bg-global-border uppercase pl1 pr1 pt0-5 pb0-5">{c('Title')
-                    .t`Plan summary`}</header>
+                <header className="small mt0 mb0 bg-global-border uppercase pl1 pr1 pt0-5 pb0-5">
+                    <span className="mr0-5">{c('Title').t`Plan summary`}</span>
+                    {model.cycle === CYCLE.MONTHLY ? <span>{c('Info').t`(1 month subscription)`}</span> : null}
+                    {model.cycle === CYCLE.YEARLY ? <span>{c('Info').t`(1 year subscription)`}</span> : null}
+                    {model.cycle === CYCLE.TWO_YEARS ? <span>{c('Info').t`(2 year subscription)`}</span> : null}
+                </header>
                 <div className="bg-global-highlight p1">
                     <div className="">
                         {hasMailPlan ? (
@@ -212,14 +203,6 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                     ) : null}
                 </div>
             </div>
-            {isUpdating ? (
-                <div className="rounded p1 mb1 bg-global-highlight">
-                    <div className="flex flex-nowrap flex-spacebetween">
-                        <div className="pr0-5">{c('Title').t`Renewal date`}</div>
-                        <Time>{checkResult.PeriodEnd}</Time>
-                    </div>
-                </div>
-            ) : null}
             {checkResult.Amount ? (
                 <div className="rounded p1 mb1 bg-global-highlight">
                     {model.coupon ? (
@@ -257,10 +240,10 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                             title={
                                 <>
                                     <span className="mr0-5 pr0-5">{totalLabel}</span>
-                                    {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
-                                        <span className="bold">
-                                            <Badge type="success">{`${totalDiscount}%`}</Badge>
-                                        </span>
+                                    {isUpdating ? (
+                                        <Info
+                                            title={c('Info').t`Billed to the end of your current subscription period`}
+                                        />
                                     ) : null}
                                 </>
                             }
