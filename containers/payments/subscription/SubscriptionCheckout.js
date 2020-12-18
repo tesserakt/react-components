@@ -4,19 +4,9 @@ import { c, msgid } from 'ttag';
 import { toMap } from 'proton-shared/lib/helpers/object';
 import { orderBy } from 'proton-shared/lib/helpers/array';
 import { hasBit } from 'proton-shared/lib/helpers/bitset';
-import {
-    PLAN_SERVICES,
-    PLAN_TYPES,
-    CYCLE,
-    PLANS,
-    ADDON_NAMES,
-    APPS,
-    BLACK_FRIDAY,
-    MONTH,
-    DAY,
-} from 'proton-shared/lib/constants';
+import { PLAN_SERVICES, PLAN_TYPES, CYCLE, PLANS, ADDON_NAMES, APPS, BLACK_FRIDAY } from 'proton-shared/lib/constants';
 import humanSize from 'proton-shared/lib/helpers/humanSize';
-import { differenceInMilliseconds } from 'date-fns';
+import { differenceInDays, differenceInMonths } from 'date-fns';
 import isTruthy from 'proton-shared/lib/helpers/isTruthy';
 
 import { Info, Badge, Time } from '../../../components';
@@ -39,6 +29,13 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const domainAddon = plans.find(({ Name }) => Name === ADDON_NAMES.DOMAIN);
     const memberAddon = plans.find(({ Name }) => Name === ADDON_NAMES.MEMBER);
     const vpnAddon = plans.find(({ Name }) => Name === ADDON_NAMES.VPN);
+
+    const months = differenceInMonths(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
+    const days = differenceInDays(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
+    const countdown = [months && c('m means months').t`${months}m`, days && c('d means days').t`${days}d`]
+        .filter(isTruthy)
+        .join(' ');
+    const totalLabel = isUpdating ? c('Label').t`Total (${countdown})` : c('Label').t`Total`;
     const getQuantity = (name, quantity) => {
         if (isUpdating) {
             return checkResult.Additions[name] || 0;
@@ -55,6 +52,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                 return acc;
             }, {}),
         }) / model.cycle;
+
     const total = isUpdating
         ? checkResult.AmountDue - checkResult.Credit
         : checkResult.Amount + checkResult.CouponDiscount;
@@ -63,8 +61,10 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
             const { Name } = plansMap[planID];
             return acc + plansMap[planID].Pricing[CYCLE.MONTHLY] * getQuantity(Name, quantity);
         }, 0) * model.cycle;
-    const totalDiscount = Math.round((total * 100) / totalWithoutDiscount) - 100;
-    const monthlyTotal = total / model.cycle;
+    const totalDiscount = Math.ceil(
+        ((checkResult.Amount + checkResult.CouponDiscount) * 100) / totalWithoutDiscount - 100
+    );
+    const monthlyTotal = checkResult.Amount / model.cycle;
     const discount = monthlyTotal - subTotal;
     const collection = orderBy(
         Object.entries(model.planIDs).map(([planID, quantity]) => ({ ...plansMap[planID], quantity })),
@@ -79,13 +79,6 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const hasVisionary = collection.some(({ Name }) => Name === PLANS.VISIONARY);
     const hasMailPlus = collection.some(({ Name }) => Name === PLANS.PLUS);
     const hasVpnPlus = collection.some(({ Name }) => Name === PLANS.VPNPLUS);
-    const diff = differenceInMilliseconds(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
-    const months = Math.floor(diff / MONTH);
-    const days = Math.floor(months / DAY) || 1;
-    const countdown = [months && c('m means months').t`${months}m`, c('d means days').t`${days}d`]
-        .filter(isTruthy)
-        .join(' ');
-    const totalLabel = isUpdating ? c('Label').t`Total (${countdown})` : c('Label').t`Total`;
 
     const getTitle = (planName, quantity) => {
         const addresses = quantity * addressAddon.MaxAddresses;
@@ -144,7 +137,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                         <span className="mr0-5 pr0-5">{getTitle(Name, update)}</span>
                                         {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) && (
                                             <span className="nobold">
-                                                <Badge type="success">{`${totalDiscount}%`}</Badge>
+                                                <CycleDiscountBadge cycle={model.cycle} />
                                             </span>
                                         )}
                                     </>
