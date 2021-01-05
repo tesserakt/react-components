@@ -215,7 +215,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                     {model.coupon ? (
                         <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
                             <CheckoutRow
-                                className="bigger m0"
+                                className="m0"
                                 title={c('Title').t`Subtotal`}
                                 amount={subTotal}
                                 currency={model.currency}
@@ -239,11 +239,11 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                 title={c('Title').t`Total (monthly)`}
                                 amount={monthlyTotal}
                                 currency={model.currency}
-                                className="bigger mt0 mb0"
+                                className="mt0 mb0"
                             />
                         ) : null}
                         <CheckoutRow
-                            className="bigger m0"
+                            className="m0"
                             title={
                                 <>
                                     <span className="mr0-5">{totalLabel}</span>
@@ -302,7 +302,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                         title={c('Title').t`Amount due`}
                         amount={checkResult.AmountDue}
                         currency={model.currency}
-                        className="bold bigger m0"
+                        className="bold m0"
                     />
                     <div className="mt1">{submit}</div>
                 </div>
