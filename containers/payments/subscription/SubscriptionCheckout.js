@@ -6,10 +6,10 @@ import { orderBy } from 'proton-shared/lib/helpers/array';
 import { hasBit } from 'proton-shared/lib/helpers/bitset';
 import { PLAN_SERVICES, PLAN_TYPES, CYCLE, PLANS, ADDON_NAMES, APPS, BLACK_FRIDAY } from 'proton-shared/lib/constants';
 import humanSize from 'proton-shared/lib/helpers/humanSize';
-import { formatDistanceToNowStrict } from 'date-fns';
-import { dateLocale } from 'proton-shared/lib/i18n';
+import { getDifferenceInMonthsAndDays } from 'proton-shared/lib/date/date';
+import isTruthy from 'proton-shared/lib/helpers/isTruthy';
 
-import { Info } from '../../../components';
+import { Info, Time } from '../../../components';
 import { useConfig } from '../../../hooks';
 import CycleSelector from '../CycleSelector';
 import CurrencySelector from '../CurrencySelector';
@@ -29,10 +29,14 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const domainAddon = plans.find(({ Name }) => Name === ADDON_NAMES.DOMAIN);
     const memberAddon = plans.find(({ Name }) => Name === ADDON_NAMES.MEMBER);
     const vpnAddon = plans.find(({ Name }) => Name === ADDON_NAMES.VPN);
-    const countdown = formatDistanceToNowStrict(new Date((checkResult.PeriodEnd || 0) * 1000), {
-        locale: dateLocale,
-        unit: 'month',
-    });
+    const { months, days } = getDifferenceInMonthsAndDays(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
+    const countdown = [
+        months && c('Countdown unit').ngettext(msgid`${months} month`, `${months} months`, months),
+        days && c('Countdown unit').ngettext(msgid`${days} day`, `${days} days`, days),
+    ]
+        .filter(isTruthy)
+        .join(', ');
+    const renewalDate = <Time key="renewal-date">{checkResult.PeriodEnd}</Time>;
     const totalLabel = isUpdating ? c('Label').t`Total (${countdown})` : c('Label').t`Total`;
     const getQuantity = (name, quantity) => {
         if (isUpdating) {
@@ -245,7 +249,8 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                                     <span className="mr0-5">{totalLabel}</span>
                                     {isUpdating ? (
                                         <Info
-                                            title={c('Info').t`Billed to the end of your current subscription period`}
+                                            title={c('Info')
+                                                .jt`Billed to the end of your current billing cycle (renews ${renewalDate})`}
                                         />
                                     ) : null}
                                 </>
