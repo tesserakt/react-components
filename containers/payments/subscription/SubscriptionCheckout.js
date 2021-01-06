@@ -161,6 +161,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                     ]}
                 />
                 <CurrencySelector
+                    loading={loading}
                     currency={model.currency}
                     onSelect={(newCurrency) => setModel({ ...model, currency: newCurrency })}
                 />
