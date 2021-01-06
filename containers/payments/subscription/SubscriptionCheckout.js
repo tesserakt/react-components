@@ -29,7 +29,7 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const domainAddon = plans.find(({ Name }) => Name === ADDON_NAMES.DOMAIN);
     const memberAddon = plans.find(({ Name }) => Name === ADDON_NAMES.MEMBER);
     const vpnAddon = plans.find(({ Name }) => Name === ADDON_NAMES.VPN);
-    const { years, months, days } = getTimeRemaining(new Date((checkResult.PeriodEnd || 0) * 1000));
+    const { years, months, days } = getTimeRemaining(new Date(), new Date((checkResult.PeriodEnd || 0) * 1000));
     const countdown = [
         years && c('Countdown unit').ngettext(msgid`${years} year`, `${years} years`, years),
         months && c('Countdown unit').ngettext(msgid`${months} month`, `${months} months`, months),
