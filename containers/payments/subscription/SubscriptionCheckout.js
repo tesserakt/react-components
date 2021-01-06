@@ -6,10 +6,10 @@ import { orderBy } from 'proton-shared/lib/helpers/array';
 import { hasBit } from 'proton-shared/lib/helpers/bitset';
 import { PLAN_SERVICES, PLAN_TYPES, CYCLE, PLANS, ADDON_NAMES, APPS, BLACK_FRIDAY } from 'proton-shared/lib/constants';
 import humanSize from 'proton-shared/lib/helpers/humanSize';
-import { getDifferenceInMonthsAndDays } from 'proton-shared/lib/date/date';
+import { getTimeRemaining } from 'proton-shared/lib/date/date';
 import isTruthy from 'proton-shared/lib/helpers/isTruthy';
 
-import { Info, Time } from '../../../components';
+import { Info, Time, Loader } from '../../../components';
 import { useConfig } from '../../../hooks';
 import CycleSelector from '../CycleSelector';
 import CurrencySelector from '../CurrencySelector';
@@ -29,8 +29,9 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
     const domainAddon = plans.find(({ Name }) => Name === ADDON_NAMES.DOMAIN);
     const memberAddon = plans.find(({ Name }) => Name === ADDON_NAMES.MEMBER);
     const vpnAddon = plans.find(({ Name }) => Name === ADDON_NAMES.VPN);
-    const { months, days } = getDifferenceInMonthsAndDays(new Date((checkResult.PeriodEnd || 0) * 1000), new Date());
+    const { years, months, days } = getTimeRemaining(new Date((checkResult.PeriodEnd || 0) * 1000));
     const countdown = [
+        years && c('Countdown unit').ngettext(msgid`${years} year`, `${years} years`, years),
         months && c('Countdown unit').ngettext(msgid`${months} month`, `${months} months`, months),
         days && c('Countdown unit').ngettext(msgid`${days} day`, `${days} days`, days),
     ]
@@ -172,138 +173,148 @@ const SubscriptionCheckout = ({ submit = c('Action').t`Pay`, plans = [], model, 
                     {model.cycle === CYCLE.TWO_YEARS ? <span>{c('Info').t`(2 year subscription)`}</span> : null}
                 </header>
                 <div className="bg-global-highlight p1">
-                    <div className="">
-                        {hasMailPlan ? (
-                            printSummary(PLAN_SERVICES.MAIL)
-                        ) : (
-                            <CheckoutRow
-                                className="bold"
-                                title={c('Info').t`ProtonMail Free`}
-                                amount={0}
-                                currency={model.currency}
-                            />
-                        )}
-                    </div>
-                    {hasVisionary ? null : (
-                        <div className="border-top border-top--dashed pt0-5">
-                            {hasVpnPlan ? (
-                                printSummary(PLAN_SERVICES.VPN)
+                    {loading ? (
+                        <Loader />
+                    ) : (
+                        <>
+                            {hasMailPlan ? (
+                                printSummary(PLAN_SERVICES.MAIL)
                             ) : (
                                 <CheckoutRow
                                     className="bold"
-                                    title={c('Info').t`ProtonVPN Free`}
+                                    title={c('Info').t`ProtonMail Free`}
                                     amount={0}
                                     currency={model.currency}
                                 />
                             )}
-                        </div>
+                            {hasVisionary ? null : (
+                                <div className="border-top border-top--dashed pt0-5">
+                                    {hasVpnPlan ? (
+                                        printSummary(PLAN_SERVICES.VPN)
+                                    ) : (
+                                        <CheckoutRow
+                                            className="bold"
+                                            title={c('Info').t`ProtonVPN Free`}
+                                            amount={0}
+                                            currency={model.currency}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                            {hasVisionary ||
+                            (hasMailPlus && hasVpnPlus && model.cycle === CYCLE.TWO_YEARS) ||
+                            (model.coupon === BLACK_FRIDAY.COUPON_CODE &&
+                                hasMailPlus &&
+                                hasVpnPlus &&
+                                [CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle)) ? (
+                                <div className="border-top border-top--dashed pt0-5">
+                                    <CheckoutRow className="bold" title={c('Info').t`ProtonDrive`} amount={0} />
+                                </div>
+                            ) : null}
+                        </>
                     )}
-                    {hasVisionary ||
-                    (hasMailPlus && hasVpnPlus && model.cycle === CYCLE.TWO_YEARS) ||
-                    (model.coupon === BLACK_FRIDAY.COUPON_CODE &&
-                        hasMailPlus &&
-                        hasVpnPlus &&
-                        [CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle)) ? (
-                        <div className="border-top border-top--dashed pt0-5">
-                            <CheckoutRow className="bold" title={c('Info').t`ProtonDrive`} amount={0} />
-                        </div>
-                    ) : null}
                 </div>
             </div>
             {checkResult.Amount ? (
                 <div className="rounded p1 mb1 bg-global-highlight">
-                    {model.coupon ? (
-                        <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
-                            <CheckoutRow
-                                className="m0"
-                                title={c('Title').t`Subtotal`}
-                                amount={subTotal}
-                                currency={model.currency}
-                            />
-                            <CheckoutRow
-                                title={
-                                    <>
-                                        <span className="mr0-5">{c('Title').t`Coupon discount`}</span>
-                                        <DiscountBadge code={model.coupon} cycle={model.cycle} />
-                                    </>
-                                }
-                                amount={discount}
-                                currency={model.currency}
-                                className="small mt0 mb0"
-                            />
-                        </div>
-                    ) : null}
-                    <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
-                        {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
-                            <CheckoutRow
-                                title={c('Title').t`Total (monthly)`}
-                                amount={monthlyTotal}
-                                currency={model.currency}
-                                className="mt0 mb0"
-                            />
-                        ) : null}
-                        <CheckoutRow
-                            className="m0"
-                            title={
-                                <>
-                                    <span className="mr0-5">{totalLabel}</span>
-                                    {isUpdating ? (
-                                        <Info
-                                            title={c('Info')
-                                                .jt`Billed to the end of your current billing cycle (renews ${renewalDate})`}
-                                        />
-                                    ) : null}
-                                </>
-                            }
-                            amount={total}
-                            currency={model.currency}
-                        />
-                    </div>
-                    {checkResult.Proration || checkResult.Credit || checkResult.Gift ? (
-                        <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
-                            {checkResult.Proration ? (
+                    {loading ? (
+                        <Loader />
+                    ) : (
+                        <>
+                            {model.coupon ? (
+                                <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
+                                    <CheckoutRow
+                                        className="m0"
+                                        title={c('Title').t`Subtotal`}
+                                        amount={subTotal}
+                                        currency={model.currency}
+                                    />
+                                    <CheckoutRow
+                                        title={
+                                            <>
+                                                <span className="mr0-5">{c('Title').t`Coupon discount`}</span>
+                                                <DiscountBadge code={model.coupon} cycle={model.cycle} />
+                                            </>
+                                        }
+                                        amount={discount}
+                                        currency={model.currency}
+                                        className="small mt0 mb0"
+                                    />
+                                </div>
+                            ) : null}
+                            <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
+                                {[CYCLE.YEARLY, CYCLE.TWO_YEARS].includes(model.cycle) ? (
+                                    <CheckoutRow
+                                        title={c('Title').t`Total (monthly)`}
+                                        amount={monthlyTotal}
+                                        currency={model.currency}
+                                        className="mt0 mb0"
+                                    />
+                                ) : null}
                                 <CheckoutRow
+                                    className="m0"
                                     title={
                                         <>
-                                            <span className="mr0-5">{c('Label').t`Proration`}</span>
-                                            <Info
-                                                url={
-                                                    isVPN
-                                                        ? 'https://protonvpn.com/support/vpn-credit-proration/'
-                                                        : 'https://protonmail.com/support/knowledge-base/credit-proration/'
-                                                }
-                                            />
+                                            <span className="mr0-5">{totalLabel}</span>
+                                            {isUpdating ? (
+                                                <Info
+                                                    title={c('Info')
+                                                        .jt`Billed to the end of your current billing cycle (renews ${renewalDate})`}
+                                                />
+                                            ) : null}
                                         </>
                                     }
-                                    amount={checkResult.Proration}
+                                    amount={total}
                                     currency={model.currency}
-                                    className="small mt0 mb0"
                                 />
+                            </div>
+                            {checkResult.Proration || checkResult.Credit || checkResult.Gift ? (
+                                <div className="border-bottom border-bottom--dashed border-bottom--currentColor mb0-5">
+                                    {checkResult.Proration ? (
+                                        <CheckoutRow
+                                            title={
+                                                <>
+                                                    <span className="mr0-5">{c('Label').t`Proration`}</span>
+                                                    <Info
+                                                        url={
+                                                            isVPN
+                                                                ? 'https://protonvpn.com/support/vpn-credit-proration/'
+                                                                : 'https://protonmail.com/support/knowledge-base/credit-proration/'
+                                                        }
+                                                    />
+                                                </>
+                                            }
+                                            amount={checkResult.Proration}
+                                            currency={model.currency}
+                                            className="small mt0 mb0"
+                                        />
+                                    ) : null}
+                                    {checkResult.Credit ? (
+                                        <CheckoutRow
+                                            title={c('Title').t`Credits`}
+                                            amount={checkResult.Credit}
+                                            currency={model.currency}
+                                            className="small mt0 mb0"
+                                        />
+                                    ) : null}
+                                    {checkResult.Gift ? (
+                                        <CheckoutRow
+                                            title={c('Title').t`Gift code`}
+                                            amount={checkResult.Gift}
+                                            currency={model.currency}
+                                            className="small mt0 mb0"
+                                        />
+                                    ) : null}
+                                </div>
                             ) : null}
-                            {checkResult.Credit ? (
-                                <CheckoutRow
-                                    title={c('Title').t`Credits`}
-                                    amount={checkResult.Credit}
-                                    currency={model.currency}
-                                    className="small mt0 mb0"
-                                />
-                            ) : null}
-                            {checkResult.Gift ? (
-                                <CheckoutRow
-                                    title={c('Title').t`Gift code`}
-                                    amount={checkResult.Gift}
-                                    currency={model.currency}
-                                    className="small mt0 mb0"
-                                />
-                            ) : null}
-                        </div>
-                    ) : null}
-                    <CheckoutRow
-                        title={c('Title').t`Amount due`}
-                        amount={checkResult.AmountDue}
-                        currency={model.currency}
-                        className="bold m0"
-                    />
+                            <CheckoutRow
+                                title={c('Title').t`Amount due`}
+                                amount={checkResult.AmountDue}
+                                currency={model.currency}
+                                className="bold m0"
+                            />
+                        </>
+                    )}
                     <div className="mt1">{submit}</div>
                 </div>
             ) : null}
