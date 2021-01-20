@@ -10,11 +10,11 @@ interface Props {
     onToggleExpand?: () => void;
     primary?: ReactNode;
     children?: ReactNode;
-    version?: ReactNode;
+    footer?: ReactNode;
     hasAppLinks?: boolean;
 }
 
-const Sidebar = ({ expanded = false, onToggleExpand, hasAppLinks = true, logo, primary, children, version }: Props) => {
+const Sidebar = ({ expanded = false, onToggleExpand, hasAppLinks = true, logo, primary, children, footer }: Props) => {
     const rootRef = useRef<HTMLDivElement>(null);
     const focusTrapProps = useFocusTrap({
         active: expanded,
@@ -38,7 +38,7 @@ const Sidebar = ({ expanded = false, onToggleExpand, hasAppLinks = true, logo, p
             <div className="flex-item-fluid flex-nowrap flex flex-column scroll-if-needed customScrollBar-container pb1">
                 {children}
             </div>
-            {version}
+            {footer}
             {hasAppLinks ? <MobileAppsLinks /> : null}
         </div>
     );
