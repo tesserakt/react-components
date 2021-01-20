@@ -69,7 +69,8 @@ const useGetEncryptionPreferences = () => {
                     isInternal,
                     contactEmailsMap
                 );
-                if (mailSettings){// && mailSettings.KT) {
+                if (isInternal) {
+                    // && mailSettings.KT) {
                     ktConfig = await verifyPublicKeys(
                         apiKeysConfig.Keys,
                         emailAddress,

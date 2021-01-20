@@ -29,6 +29,7 @@ import KeyBackgroundManager from './KeyBackgroundManager';
 import InternalEmailAddressGeneration from './InternalEmailAddressGeneration';
 import StorageListener from './StorageListener';
 import DelinquentContainer from './DelinquentContainer';
+import { KeyTransparencyManager } from '../kt';
 
 interface Props<T, M extends Model<T>, E, EvtM extends Model<E>> {
     locales?: TtagLocaleMap;
@@ -172,7 +173,9 @@ const StandardPrivateApp = <T, M extends Model<T>, E, EvtM extends Model<E>>({
                     />
                     <StorageListener />
                     <ForceRefreshProvider>
-                        <LoadedApp />
+                        <KeyTransparencyManager>
+                            <LoadedApp />
+                        </KeyTransparencyManager>
                     </ForceRefreshProvider>
                 </InternalEmailAddressGeneration>
             </ContactProvider>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { c } from 'ttag';
 
+// import { verifyPublicKeys } from 'key-transparency-web-client';
 import { prepareContacts } from 'proton-shared/lib/contacts/encrypt';
 import { hasCategories, reOrderByPref } from 'proton-shared/lib/contacts/properties';
 import { addContacts } from 'proton-shared/lib/api/contacts';
@@ -20,6 +21,7 @@ import { ContactProperties, ContactProperty } from 'proton-shared/lib/interfaces
 import { VCARD_KEY_FIELDS, CATEGORIES } from 'proton-shared/lib/contacts/constants';
 import { API_CODES, CONTACT_MIME_TYPES, MIME_TYPES, MIME_TYPES_MORE, PGP_SCHEMES } from 'proton-shared/lib/constants';
 import { noop } from 'proton-shared/lib/helpers/function';
+import { KTInfo, verifyPublicKeys } from 'key-transparency-web-client';
 
 import ContactMIMETypeSelect from '../../../components/contacts/ContactMIMETypeSelect';
 import ContactPgpSettings from '../ContactPgpSettings';
@@ -65,6 +67,7 @@ const ContactEmailSettingsModal = ({
     const api = useApi();
     const { call } = useEventManager();
     const [model, setModel] = useState<ContactPublicKeyModel>({} as ContactPublicKeyModel);
+    const [ktModel, setKTModel] = useState<KTInfo>({} as KTInfo);
     const [showPgpSettings, setShowPgpSettings] = useState(false);
     const [loading, withLoading] = useLoading();
     const { createNotification } = useNotifications();
@@ -79,7 +82,19 @@ const ContactEmailSettingsModal = ({
      * @returns {Promise}
      */
     const prepare = async (api: Api) => {
-        const apiKeysConfig = await getPublicKeysEmailHelper(api, emailAddress, true);
+        const apiKeysConfig = await getPublicKeysEmailHelper(api, emailAddress);
+
+        if (mailSettings) {
+            // && mailSettings.KT) {
+            const ktConfig = await verifyPublicKeys(
+                apiKeysConfig.Keys.map((key) => ({ Flags: key.Flags!, PublicKey: key.PublicKey })),
+                emailAddress,
+                apiKeysConfig.SignedKeyList,
+                api
+            );
+            setKTModel(ktConfig);
+        }
+
         const pinnedKeysConfig = await getKeyInfoFromProperties(properties, emailGroup || '');
         const publicKeyModel = await getContactPublicKeyModel({
             emailAddress,
@@ -265,7 +280,12 @@ const ContactEmailSettingsModal = ({
                         </LinkButton>
                     </div>
                     {showPgpSettings && model ? (
-                        <ContactPgpSettings model={model} setModel={setModel} mailSettings={mailSettings} />
+                        <ContactPgpSettings
+                            model={model}
+                            setModel={setModel}
+                            mailSettings={mailSettings}
+                            ktConfig={ktModel}
+                        />
                     ) : null}
                 </InnerModal>
                 <FooterModal>
