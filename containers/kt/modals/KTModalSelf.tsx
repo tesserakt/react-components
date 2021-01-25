@@ -16,7 +16,17 @@ import { Select } from '../../../components/select';
 const KTModalSelf = ({ ...rest }) => {
     const keyTransparencyState = useKeyTransparency();
     const [Addresses] = useAddresses();
-    const [addressIndex, setAddressIndex] = useState(() => (Array.isArray(Addresses) ? 0 : -1));
+
+    let startingIndex = 0;
+    for (let index = 0; index < Addresses.length; index++) {
+        const ktSelfAuditResult = keyTransparencyState.ktSelfAuditResult.get(Addresses[index].ID);
+        if (ktSelfAuditResult?.code !== KT_STATUS.KT_PASSED) {
+            startingIndex = index;
+            break;
+        }
+    }
+
+    const [addressIndex, setAddressIndex] = useState(() => (Array.isArray(Addresses) ? startingIndex : -1));
     const [loadingKeyID] = useState<string>('');
     const goToApp = useAppLink();
 
@@ -35,6 +45,7 @@ const KTModalSelf = ({ ...rest }) => {
             This makes sure that nobody else can read those emails.`
             : c('Info')
                   .t`We couldn't verify that the above public keys are in Key Transparency on ${dateLastSelfAudit.toUTCString()}.
+            The error we found is "${ktSelfAuditResult?.error}".
             This means that other ProtonMail users sending emails to you might be using other public keys.
             This means that those emails might not be securely encrypted.`;
     const alertKT = ktSelfAuditResult?.code === KT_STATUS.KT_PASSED ? 'success' : 'error';
