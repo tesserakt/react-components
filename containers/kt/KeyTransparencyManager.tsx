@@ -51,9 +51,14 @@ const KeyTransparencyManager = ({ children }: Props) => {
                     };
                 })
             );
+            const userPrivateKeys = userKeys.map(({ privateKey }) => {
+                return {
+                    privateKey,
+                };
+            });
 
             // Run self-audit
-            const ktSelfAuditResult = await ktSelfAudit([normalApi, silentApi], addressesWithKeys, userKeys);
+            const ktSelfAuditResult = await ktSelfAudit([normalApi, silentApi], addressesWithKeys, userPrivateKeys);
 
             // Run ends
             setState((state) => {
