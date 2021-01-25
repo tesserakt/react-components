@@ -6,7 +6,7 @@ import { dateLocale } from 'proton-shared/lib/i18n';
 import getPublicKeysEmailHelper from 'proton-shared/lib/api/helpers/getPublicKeysEmailHelper';
 import { getIsInternalUser, getKeyEncryptStatus } from 'proton-shared/lib/keys/publicKeys';
 import { algorithmInfo, OpenPGPKey } from 'pmcrypto';
-import { describe } from 'proton-shared/lib/keys/keysAlgorithm';
+import { getFormattedAlgorithmName } from 'proton-shared/lib/keys/keyAlgorithm';
 import isTruthy from 'proton-shared/lib/helpers/isTruthy';
 
 import { Badge, KeyWarningIcon, Table, TableBody, TableRow } from '../../../components';
@@ -47,7 +47,7 @@ const KTKeysTable = ({ emailAddress }: Props) => {
                 const creationTime = publicKey.getCreationTime();
                 const expirationTime = await publicKey.getExpirationTime('encrypt');
                 const algoInfo = publicKey.getAlgorithmInfo();
-                const algo = describe(algoInfo as algorithmInfo);
+                const algo = getFormattedAlgorithmName(algoInfo as algorithmInfo);
                 const { isExpired, isRevoked } = await getKeyEncryptStatus(publicKey);
                 const isPrimary = !index && !isExpired && !isRevoked;
                 return {

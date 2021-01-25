@@ -31,18 +31,18 @@ const KeyTransparencyManager = ({ children }: Props) => {
             const addresses = await getAddresses();
             const addressesWithKeys = await Promise.all(
                 addresses.map(async (address) => {
-                    const cachedKeys = await getAddressKeys(address.ID);
+                    const decryptedKeys = await getAddressKeys(address.ID);
                     const Keys = address.Keys.map((key) => {
-                        const cachedEquivalent = cachedKeys.find((cachedKey) => {
-                            return key.Fingerprint === cachedKey.Key.Fingerprint;
+                        const decryptedEquivalent = decryptedKeys.find((decryptedKey) => {
+                            return key.ID === decryptedKey.ID;
                         })!;
-                        if (!cachedEquivalent || !cachedEquivalent.privateKey) {
+                        if (!decryptedEquivalent || !decryptedEquivalent.privateKey) {
                             return key;
                         }
                         return {
                             ...key,
-                            PublicKey: cachedEquivalent.privateKey.toPublic().armor(),
-                            PrivateKey: cachedEquivalent.privateKey.armor(),
+                            PublicKey: decryptedEquivalent.publicKey.armor(),
+                            PrivateKey: decryptedEquivalent.privateKey.armor(),
                         };
                     });
                     return {
