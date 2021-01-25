@@ -5,12 +5,14 @@ import { createMember, createMemberAddress } from 'proton-shared/lib/api/members
 import { srpVerify } from 'proton-shared/lib/srp';
 import { Domain, Organization, Address, CachedOrganizationKey } from 'proton-shared/lib/interfaces';
 import { setupMemberKey } from 'proton-shared/lib/keys';
+import { ktSaveToLS } from 'key-transparency-web-client';
 import { useApi, useNotifications, useEventManager, useGetAddresses } from '../../hooks';
 import { FormModal, Row, Field, Label, PasswordInput, Input, Checkbox, Select } from '../../components';
 
 import MemberStorageSelector, { getStorageRange } from './MemberStorageSelector';
 import MemberVPNSelector, { getVPNRange } from './MemberVPNSelector';
 import SelectEncryption from '../keys/addKey/SelectEncryption';
+import useKeyTransparency from '../kt/useKeyTransparency';
 
 const FIVE_GIGA = 5 * GIGA;
 
@@ -40,6 +42,7 @@ const MemberModal = ({ onClose, organization, organizationKey, domains, domainsA
         storage: Math.min(storageRange[1], FIVE_GIGA),
     });
     const update = (key: string, value: any) => updateModel({ ...model, [key]: value });
+    const keyTransparencyState = useKeyTransparency();
 
     const [encryptionType, setEncryptionType] = useState(DEFAULT_ENCRYPTION_CONFIG);
     const [loading, setLoading] = useState(false);
@@ -78,7 +81,7 @@ const MemberModal = ({ onClose, organization, organizationKey, domains, domainsA
                 throw new Error('Organization key is not decrypted');
             }
             const ownerAddresses = await getAddresses();
-            await setupMemberKey({
+            const { userPublicKeys, ktMessageObject } = await setupMemberKey({
                 api,
                 ownerAddresses,
                 member: Member,
@@ -86,7 +89,9 @@ const MemberModal = ({ onClose, organization, organizationKey, domains, domainsA
                 organizationKey: organizationKey.privateKey,
                 encryptionConfig: ENCRYPTION_CONFIGS[encryptionType],
                 password: model.password,
+                keyTransparencyState,
             });
+            await ktSaveToLS(ktMessageObject, userPublicKeys, api);
         }
     };
 

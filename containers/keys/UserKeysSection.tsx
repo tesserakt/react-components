@@ -1,6 +1,7 @@
 import React from 'react';
 import { c } from 'ttag';
 import { getPrimaryKey, reactivateKeysProcess } from 'proton-shared/lib/keys';
+import { ktSaveToLS } from 'key-transparency-web-client';
 
 import { Alert, Button, Block, Loader } from '../../components';
 import {
@@ -20,6 +21,7 @@ import KeysTable from './KeysTable';
 import useDisplayKeys from './shared/useDisplayKeys';
 import { KeyReactivationRequest } from './reactivateKeys/interface';
 import { getKeyByID } from './shared/helper';
+import useKeyTransparency from '../kt/useKeyTransparency';
 
 const UserKeysSections = () => {
     const { createModal } = useModals();
@@ -30,6 +32,7 @@ const UserKeysSections = () => {
     const [userKeys, loadingUserKeys] = useUserKeys();
     const getAddresses = useGetAddresses();
     const userKeysDisplay = useDisplayKeys({ keys: userKeys, User });
+    const keyTransparencyState = useKeyTransparency();
 
     if (loadingUserKeys || !Array.isArray(userKeys)) {
         return <Loader />;
@@ -67,7 +70,7 @@ const UserKeysSections = () => {
             <ReactivateKeysModal
                 keyReactivationRequests={keyReactivationRequests}
                 onProcess={async (keyReactivationRecords, oldPassword, cb) => {
-                    await reactivateKeysProcess({
+                    const ktMessageObjects = await reactivateKeysProcess({
                         api,
                         user: User,
                         userKeys,
@@ -75,7 +78,13 @@ const UserKeysSections = () => {
                         keyReactivationRecords,
                         keyPassword: authentication.getPassword(),
                         onReactivation: cb,
+                        keyTransparencyState,
                     });
+                    await Promise.all(
+                        ktMessageObjects.map(async (ktMessageObject) => {
+                            ktSaveToLS(ktMessageObject, userKeys, api);
+                        })
+                    );
                     return call();
                 }}
             />

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { c } from 'ttag';
+import { OpenPGPKey, getKeys } from 'pmcrypto';
 import { hasAddressKeyMigration } from 'proton-shared/lib/constants';
 import { requestLoginResetToken, validateResetToken } from 'proton-shared/lib/api/reset';
 import { getRecoveryMethods, getUser } from 'proton-shared/lib/api/user';
@@ -13,9 +14,11 @@ import { AuthResponse } from 'proton-shared/lib/authentication/interface';
 
 import { withAuthHeaders } from 'proton-shared/lib/fetch/headers';
 import { API_CUSTOM_ERROR_CODES } from 'proton-shared/lib/errors';
+import { verifySelfAuditResult, KT_STATUS, ktSaveToLS } from 'key-transparency-web-client';
 
 import { useApi, useNotifications, useLoading } from '../../hooks';
 import { OnLoginCallback } from '../app';
+import useKeyTransparency from '../kt/useKeyTransparency';
 
 export enum STEPS {
     REQUEST_RECOVERY_METHODS = 1,
@@ -66,6 +69,7 @@ const useResetPassword = ({ onLogin, initalStep }: Props) => {
     const [loading, withLoading] = useLoading();
     const addressesRef = useRef<Address[]>([]);
     const dangerWord = 'DANGER';
+    const keyTransparencyState = useKeyTransparency();
 
     const gotoStep = (step: STEPS) => {
         return setState((state: State) => ({ ...state, step }));
@@ -180,6 +184,44 @@ const useResetPassword = ({ onLogin, initalStep }: Props) => {
             credentials: { username, password },
             config: auth({ Username: username }),
         });
+
+        // Prepare keys
+        const userPublicKeys: { publicKey: OpenPGPKey }[] = (await getKeys(userKeyPayload)).map(
+            (privateKey: OpenPGPKey) => {
+                return {
+                    publicKey: privateKey.toPublic(),
+                };
+            }
+        );
+        await Promise.all(
+            addressKeysPayload.map(async ({ AddressID, SignedKeyList }) => {
+                const ktMessageObject = {
+                    message: '',
+                    addressID: AddressID,
+                };
+                const address = addresses.find((address) => address.ID === AddressID);
+                if (!address) {
+                    throw new Error('Address for KT not found');
+                }
+                if (keyTransparencyState) {
+                    const ktInfo = await verifySelfAuditResult(
+                        address,
+                        SignedKeyList,
+                        keyTransparencyState.ktSelfAuditResult,
+                        keyTransparencyState.lastSelfAudit,
+                        keyTransparencyState.isRunning,
+                        api
+                    );
+
+                    if (ktInfo.code === KT_STATUS.KT_FAILED) {
+                        throw new Error(`Cannot import key: ${ktInfo.error}`);
+                    }
+                    ktMessageObject.message = ktInfo.message;
+                }
+                await ktSaveToLS(ktMessageObject, userPublicKeys, api);
+            })
+        );
+
         const User = await api<{ User: tsUser }>(
             withAuthHeaders(authResponse.UID, authResponse.AccessToken, getUser())
         ).then(({ User }) => User);

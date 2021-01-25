@@ -251,13 +251,13 @@ const AccountSignupContainer = ({ toApp, onLogin, onBack, Layout }: Props) => {
                 ? await handleSetupAddress({ api: authApi.api, domains, username })
                 : await authApi.api<{ Addresses: Address[] }>(queryAddresses()).then(({ Addresses }) => Addresses);
 
-            const keyPassword = addresses.length
+            const { keyPassword } = addresses.length
                 ? await handleSetupKeys({
                       api: authApi.api,
                       addresses,
                       password,
                   })
-                : undefined;
+                : { keyPassword: undefined };
 
             const authResponse = authApi.getAuthResponse();
             const User = await authApi.api<{ User: tsUser }>(getUser()).then(({ User }) => User);

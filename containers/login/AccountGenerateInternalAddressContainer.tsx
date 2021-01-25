@@ -13,11 +13,13 @@ import {
     getHasMigratedAddressKeys,
     getPrimaryKey,
 } from 'proton-shared/lib/keys';
+import { ktSaveToLS } from 'key-transparency-web-client';
 
 import { useErrorHandler } from '../../hooks';
 
 import handleSetupAddress from '../signup/helpers/handleSetupAddress';
 import AccountGenerateInternalAddressForm from './components/AccountGenerateInternalAddressForm';
+import useKeyTransparency from '../kt/useKeyTransparency';
 
 interface Props {
     onDone: () => Promise<void>;
@@ -30,6 +32,7 @@ const AccountGenerateInternalAddressContainer = ({ onDone, api, keyPassword }: P
     const [usernameError, setUsernameError] = useState('');
     const [availableDomains, setAvailableDomains] = useState([]);
     const errorHandler = useErrorHandler();
+    const keyTransparencyState = useKeyTransparency();
 
     const handleCreateAddressAndKey = async () => {
         if (!keyPassword) {
@@ -67,19 +70,30 @@ const AccountGenerateInternalAddressContainer = ({ onDone, api, keyPassword }: P
             if (!primaryUserKey) {
                 throw new Error('Missing primary user key');
             }
-            await createAddressKeyV2({
+            const [, , ktMessageObject] = await createAddressKeyV2({
                 api,
                 userKey: primaryUserKey,
                 address: Address,
                 activeKeys: [],
+                keyTransparencyState,
             });
+
+            await ktSaveToLS(ktMessageObject, userKeys, api);
         } else {
-            await createAddressKeyLegacy({
+            const [, , ktMessageObject] = await createAddressKeyLegacy({
                 api,
                 passphrase: keyPassword,
                 address: Address,
                 activeKeys: [],
+                keyTransparencyState,
             });
+
+            const userKeys = await getDecryptedUserKeys({
+                user,
+                userKeys: user.Keys,
+                keyPassword,
+            });
+            await ktSaveToLS(ktMessageObject, userKeys, api);
         }
     };
 

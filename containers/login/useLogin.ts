@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { getKeys } from 'pmcrypto';
 import { AUTH_VERSION } from 'pm-srp';
 import { c } from 'ttag';
 import { srpVerify } from 'proton-shared/lib/srp';
@@ -25,12 +26,14 @@ import { getHasV2KeysToUpgrade, upgradeV2KeysHelper } from 'proton-shared/lib/ke
 import { traceError } from 'proton-shared/lib/helpers/sentry';
 import { getMember } from 'proton-shared/lib/api/members';
 import { getApiErrorMessage } from 'proton-shared/lib/api/helpers/apiErrorHelper';
+import { ktSaveToLS } from 'key-transparency-web-client';
 
 import { getAuthTypes, handleUnlockKey } from './helper';
 import handleSetupAddressKeys from './handleSetupAddressKeys';
 import { AuthCacheResult, FORM, LoginModel } from './interface';
 import { OnLoginCallback } from '../app/interface';
 import { getLoginErrors, getLoginSetters } from './useLoginHelpers';
+import useKeyTransparency from '../kt/useKeyTransparency';
 
 const INITIAL_STATE: LoginModel = {
     username: '',
@@ -53,6 +56,7 @@ export interface Props {
 const useLogin = ({ api, onLogin, ignoreUnlock, hasGenerateKeys = false }: Props) => {
     const cacheRef = useRef<AuthCacheResult>();
     const [state, setState] = useState<LoginModel>(INITIAL_STATE);
+    const keyTransparencyState = useKeyTransparency();
 
     const handleCancel = () => {
         cacheRef.current = undefined;
@@ -131,7 +135,7 @@ const useLogin = ({ api, onLogin, ignoreUnlock, hasGenerateKeys = false }: Props
         ]);
 
         if (Addresses && getHasV2KeysToUpgrade(User, Addresses)) {
-            const newKeyPassword = await upgradeV2KeysHelper({
+            const { newKeyPassword, ktMessageObjects } = await upgradeV2KeysHelper({
                 user: User,
                 addresses: Addresses,
                 loginPassword,
@@ -139,10 +143,27 @@ const useLogin = ({ api, onLogin, ignoreUnlock, hasGenerateKeys = false }: Props
                 clearKeyPassword,
                 isOnePasswordMode,
                 api: authApi,
+                keyTransparencyState,
             }).catch((e) => {
                 traceError(e);
-                return undefined;
+                return { newKeyPassword: undefined, ktMessageObjects: undefined };
             });
+            if (ktMessageObjects !== undefined) {
+                // Prepare keys
+                const userPublicKeys = await Promise.all(
+                    User.Keys.map(async ({ PublicKey }) => {
+                        const [publicKey] = await getKeys(PublicKey);
+                        return {
+                            publicKey,
+                        };
+                    })
+                );
+                await Promise.all(
+                    ktMessageObjects.map(async (ktMessageObject) => {
+                        ktSaveToLS(ktMessageObject, userPublicKeys, api);
+                    })
+                );
+            }
             if (newKeyPassword !== undefined) {
                 return finalizeLogin({
                     loginPassword,
@@ -195,7 +216,7 @@ const useLogin = ({ api, onLogin, ignoreUnlock, hasGenerateKeys = false }: Props
      */
     const handleSetupPassword = async (newPassword: string) => {
         const { authApi } = getCache();
-        const keyPassword = await handleSetupAddressKeys({
+        const { keyPassword } = await handleSetupAddressKeys({
             api: authApi,
             username: state.username,
             password: newPassword,
