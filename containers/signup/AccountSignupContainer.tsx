@@ -251,7 +251,7 @@ const AccountSignupContainer = ({ toApp, onLogin, onBack, Layout }: Props) => {
                 ? await handleSetupAddress({ api: authApi.api, domains, username })
                 : await authApi.api<{ Addresses: Address[] }>(queryAddresses()).then(({ Addresses }) => Addresses);
 
-            const { keyPassword } = addresses.length
+            const keyPassword = addresses.length
                 ? await handleSetupKeys({
                       api: authApi.api,
                       addresses,

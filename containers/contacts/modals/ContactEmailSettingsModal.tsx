@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { c } from 'ttag';
 
-// import { verifyPublicKeys } from 'key-transparency-web-client';
 import { prepareContacts } from 'proton-shared/lib/contacts/encrypt';
 import { hasCategories, reOrderByPref } from 'proton-shared/lib/contacts/properties';
 import { addContacts } from 'proton-shared/lib/api/contacts';

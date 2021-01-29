@@ -9,7 +9,7 @@ import {
     addAddressKeysProcess,
     setAddressKeyFlags,
 } from 'proton-shared/lib/keys';
-import { ktSaveToLS } from 'key-transparency-web-client';
+import { KTError, ktSaveToLS } from 'key-transparency-web-client';
 
 import { Alert, Block, Loader, PrimaryButton, Select } from '../../components';
 import {
@@ -19,6 +19,7 @@ import {
     useAuthentication,
     useEventManager,
     useModals,
+    useNotifications,
     useUser,
     useUserKeys,
 } from '../../hooks';
@@ -51,6 +52,7 @@ const AddressKeysSection = () => {
     const [loadingKeyID, setLoadingKeyID] = useState<string>('');
     const [addressIndex, setAddressIndex] = useState(() => (Array.isArray(Addresses) ? 0 : -1));
     const keyTransparencyState = useKeyTransparency();
+    const { createNotification } = useNotifications();
 
     const Address = Addresses ? Addresses[addressIndex] : undefined;
     const { ID: addressID = '', Email: addressEmail = '' } = Address || {};
@@ -97,6 +99,15 @@ const AddressKeysSection = () => {
             const ktMessageObject = await setPrimaryAddressKey(api, Address, addressKeys, ID, keyTransparencyState);
             await ktSaveToLS(ktMessageObject, userKeys, api);
             await call();
+        } catch (error) {
+            if (error instanceof KTError) {
+                createNotification({
+                    type: 'error',
+                    text: c('Error').t`Key Transparency self-audit failed`,
+                });
+            } else {
+                throw error;
+            }
         } finally {
             setLoadingKeyID('');
         }
@@ -124,6 +135,15 @@ const AddressKeysSection = () => {
             );
             await ktSaveToLS(ktMessageObject, userKeys, api);
             await call();
+        } catch (error) {
+            if (error instanceof KTError) {
+                createNotification({
+                    type: 'error',
+                    text: c('Error').t`Key Transparency self-audit failed`,
+                });
+            } else {
+                throw error;
+            }
         } finally {
             setLoadingKeyID('');
         }

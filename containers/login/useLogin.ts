@@ -216,7 +216,7 @@ const useLogin = ({ api, onLogin, ignoreUnlock, hasGenerateKeys = false }: Props
      */
     const handleSetupPassword = async (newPassword: string) => {
         const { authApi } = getCache();
-        const { keyPassword } = await handleSetupAddressKeys({
+        const keyPassword = await handleSetupAddressKeys({
             api: authApi,
             username: state.username,
             password: newPassword,
