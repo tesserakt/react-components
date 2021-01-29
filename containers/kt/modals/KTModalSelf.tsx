@@ -39,15 +39,13 @@ const KTModalSelf = ({ ...rest }) => {
     const topParagraph = c('Info').t`Messages you receive will be encrypted using the keys below.`;
     const bottomParagraph =
         ktSelfAuditResult?.code === KT_STATUS.KT_PASSED
-            ? c('Info')
-                  .t`We verified that the above public keys are in Key Transparency on ${dateLastSelfAudit.toUTCString()}.
+            ? c('Info').t`We verified that the above public keys are in Key Transparency.
             This means that other ProtonMail users sending emails to you will also use these public keys.
             This makes sure that nobody else can read those emails.`
-            : c('Info')
-                  .t`We couldn't verify that the above public keys are in Key Transparency on ${dateLastSelfAudit.toUTCString()}.
-            The error we found is "${ktSelfAuditResult?.error}".
+            : c('Info').t`We couldn't verify that the above public keys are in Key Transparency.
             This means that other ProtonMail users sending emails to you might be using other public keys.
             This means that those emails might not be securely encrypted.`;
+    const errorParagraph = `[${dateLastSelfAudit.toUTCString()}] ${ktSelfAuditResult?.error}`;
     const alertKT = ktSelfAuditResult?.code === KT_STATUS.KT_PASSED ? 'success' : 'error';
 
     const handleSubmit = () => {
@@ -86,7 +84,8 @@ const KTModalSelf = ({ ...rest }) => {
             )}
             <KTKeysTable emailAddress={Address.Email} />
             <Alert type={alertKT} learnMore="https://protonmail.com/support/knowledge-base/key-transparency/">
-                {bottomParagraph}
+                <div>{bottomParagraph}</div>
+                <div>{errorParagraph}</div>
             </Alert>
         </FormModal>
     );

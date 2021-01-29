@@ -257,7 +257,7 @@ const AccountSignupContainer = ({ toApp, onLogin, onBack, Layout }: Props) => {
                       addresses,
                       password,
                   })
-                : { keyPassword: undefined };
+                : undefined;
 
             const authResponse = authApi.getAuthResponse();
             const User = await authApi.api<{ User: tsUser }>(getUser()).then(({ User }) => User);
