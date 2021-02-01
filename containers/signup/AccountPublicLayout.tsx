@@ -6,7 +6,7 @@ import { useAppTitle, useConfig } from '../../hooks';
 import { classnames, getAppVersion } from '../../helpers';
 
 import { PublicTopBanners } from '../topBanners';
-import { Href } from '../../components';
+import { Href, Icon, ProtonLogo } from '../../components';
 
 import PublicLanguageSelect from './PublicLanguageSelect';
 
@@ -40,68 +40,78 @@ const AccountPublicLayout = ({ children, title, subtitle, aside, larger, left, c
     const appVersion = getAppVersion(APP_VERSION_DISPLAY || APP_VERSION);
 
     return (
-        <div className="scroll-if-needed h100v">
+        <div className="flex flex-column h100 signLayout-bg">
             <PublicTopBanners />
-            <div className="pt1 pb1 pl2 pr2 on-mobile-p0 sign-layout-container flex flex-nowrap flex-column flex-justify-space-between">
-                <div className="flex-item-fluid-auto sign-layout flex-item-noshrink flex flex-column flex-nowrap">
-                    <div className="flex flex-column flex-nowrap flex-item-noshrink on-mobile-flex-item-fluid-auto">
+            <header className="flex flex-spacebetween flex-item-noshrink p2">
+                <span>
+                    <ProtonLogo />
+                </span>
+                <span className="alignright">
+                    {locales ? <PublicLanguageSelect className="support-dropdown-button" locales={locales} /> : null}
+                </span>
+            </header>
+            <div className="pt1 pb1 pl2 pr2 onmobile-p0 signLayout-container flex-item-fluid flex flex-nowrap flex-column flex-spacebetween">
+                <div className="flex-item-fluid-auto signLayout flex-item-noshrink flex flex-column flex-nowrap">
+                    <div className="flex flex-column flex-nowrap flex-item-noshrink onmobile-flex-item-fluid-auto">
                         <div
                             className={classnames([
-                                'center bg-white-dm color-global-grey-dm mt2 mb2 on-mobile-mt0 on-mobile-mb0 on-mobile-pb1 w100 max-w100 bordered-container flex-item-noshrink flex flex-nowrap signup-container',
-                                larger ? '' : 'max-w50e',
+                                'center bg-white-dm color-global-grey-dm onmobile-pb1 w100 mw100 bordered-container flex-item-noshrink flex flex-nowrap signup-container',
+                                larger ? '' : 'mw50e',
                             ])}
                         >
-                            <main className="on-mobile-p1 flex-item-fluid sign-layout-main flex-no-min-children flex-column flex-nowrap">
-                                <header className="flex flex-align-items-center flex-nowrap mb2">
+                            <main className="onmobile-p1 flex-item-fluid signLayout-main flex-noMinChildren flex-column flex-nowrap">
+                                <div className="flex flex-items-center flex-nowrap mb2">
                                     <span className="flex-item-fluid flex">{left}</span>
-                                    <span className="text-center flex w70p">{center}</span>
-                                    <span className="flex-item-fluid flex text-right" />
-                                </header>
-                                <div className="mb2 flex-item-fluid sign-layout-main-content">
+                                    <span className="aligncenter flex w70p">{center}</span>
+                                </div>
+                                <div className="mb2 flex-item-fluid signLayout-main-content">
                                     {title ? (
-                                        <h1 className={classnames(['h4 text-bold mt0', subtitle ? 'mb0-25' : 'mb1'])}>
+                                        <h1 className={classnames(['h4 bold mt0', subtitle ? 'mb0-25' : 'mb1'])}>
                                             {title}
                                         </h1>
                                     ) : null}
                                     {subtitle ? <div className="mb1">{subtitle}</div> : null}
                                     {children}
                                 </div>
-                                <footer className="flex flex-align-items-center flex-nowrap">
-                                    <span className="flex-item-fluid">
-                                        {locales ? (
-                                            <PublicLanguageSelect
-                                                className="support-dropdown-button link"
-                                                locales={locales}
-                                            />
-                                        ) : null}
-                                    </span>
-                                    <span className="flex-item-fluid text-right">{right}</span>
+                                <footer className="flex flex-items-center flex-nowrap">
+                                    <span className="flex-item-fluid alignright">{right}</span>
                                 </footer>
                             </main>
                             {aside ? (
-                                <aside className="no-mobile bg-global-highlight w33 p2 flex flex-align-items-center flex-justify-center text-sm m0 sign-layout-aside">
+                                <aside className="nomobile bg-global-highlight w33 p2 flex flex-items-center flex-justify-center small m0 signLayout-aside">
                                     {aside}
                                 </aside>
                             ) : null}
                         </div>
                     </div>
+                    <div className="aligncenter small m0 pt0-5 pb0-5 flex-item-noshrink">
+                        <span className="opacity-50 automobile">{c('Info')
+                            .t`Made globally - Hosted in Switzerland`}</span>
+                        <span className="opacity-50 pl0-75 pr0-75 nomobile" aria-hidden="true">
+                            |
+                        </span>
+                        <span className="automobile">{termsLink}</span>
+                        <span className="opacity-50 pl0-75 pr0-75 nomobile" aria-hidden="true">
+                            |
+                        </span>
+                        <span className="automobile">{privacyLink}</span>
+                        <span className="opacity-50 pl0-75 pr0-75 nomobile" aria-hidden="true">
+                            |
+                        </span>
+                        <span className="opacity-50 automobile">{c('Info').jt`Version ${appVersion}`}</span>
+                    </div>
                 </div>
-                <footer className="text-center text-sm m0 pt0-5 pb0-5 flex-item-noshrink">
-                    <span className="opacity-50 auto-mobile">{c('Info').t`Made globally - Hosted in Switzerland`}</span>
-                    <span className="opacity-50 pl0-75 pr0-75 no-mobile" aria-hidden="true">
-                        |
-                    </span>
-                    <span className="auto-mobile">{termsLink}</span>
-                    <span className="opacity-50 pl0-75 pr0-75 no-mobile" aria-hidden="true">
-                        |
-                    </span>
-                    <span className="auto-mobile">{privacyLink}</span>
-                    <span className="opacity-50 pl0-75 pr0-75 no-mobile" aria-hidden="true">
-                        |
-                    </span>
-                    <span className="opacity-50 auto-mobile">{c('Info').jt`Version ${appVersion}`}</span>
-                </footer>
             </div>
+            <footer className="flex-item-noshrink aligncenter nomobile p1">
+                {c('Info').t`One account for all Proton services`}
+                <div className="p0-5">
+                    <Icon name="protonmail" className="ml0-5 mr0-5" alt="Proton Mail" size={20} />
+                    <Icon name="protoncalendar" className="ml0-5 mr0-5" alt="Proton Calendar" size={20} />
+                    <Icon name="protonvpn" className="ml0-5 mr0-5" alt="Proton VPN" size={20} />
+                    <Icon name="protondrive" className="ml0-5 mr0-5" alt="Proton Drive" size={20} />
+                    <Icon name="protoncontacts" className="ml0-5 mr0-5" alt="Proton Contacts" size={20} />
+                </div>
+            </footer>
         </div>
     );
 };

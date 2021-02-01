@@ -6,7 +6,7 @@ import { getBrowserLocale, getClosestLocaleCode } from 'proton-shared/lib/i18n/h
 import { TtagLocaleMap } from 'proton-shared/lib/interfaces/Locale';
 import { setCookie } from 'proton-shared/lib/helpers/cookies';
 import { addDays } from 'date-fns';
-import { DropdownMenu, DropdownMenuButton, SimpleDropdown } from '../../components';
+import { DropdownMenu, DropdownMenuButton, Icon, SimpleDropdown } from '../../components';
 import { useConfig, useForceRefresh } from '../../hooks';
 
 interface Props {
@@ -35,8 +35,15 @@ const PublicLanguageSelect = ({ className, locales = {} }: Props) => {
         </DropdownMenuButton>
     ));
 
+    const selectedLanguage = (
+        <>
+            <Icon name="world" />
+            <span className="ml0-5">{LOCALES[localeCode]}</span>
+        </>
+    );
+
     return (
-        <SimpleDropdown content={LOCALES[localeCode]} className={className}>
+        <SimpleDropdown content={selectedLanguage} className={className}>
             <DropdownMenu>{languages}</DropdownMenu>
         </SimpleDropdown>
     );
