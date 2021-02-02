@@ -76,7 +76,7 @@ const KeyTransparencySection = () => {
                     <Info
                         url="https://protonmail.com/support/knowledge-base/key-transparency/"
                         title={c('Tooltip verify keys using Key Transparency')
-                            .t`Insert your keys in Key Transparency. When sending an internal message to a sender that has keys in Key Transparency, verify them.`}
+                            .t`When sending an internal message to a sender that has keys in Key Transparency, verify them.`}
                     />
                 </Label>
                 <Field>
