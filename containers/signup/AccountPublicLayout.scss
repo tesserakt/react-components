@@ -3,7 +3,7 @@
  */
 $default-height-fields: 4.1rem;
 @import '~design-system/scss/config/';
-$bg-signup-img: './bg-signup.png' !default;
+$bg-signup-img: './bg-mountains.svg' !default;
 
 .signLayout-bg {
 	background: $pm-global-grey url($bg-signup-img) 0 0 no-repeat;
@@ -56,7 +56,7 @@ $bg-signup-img: './bg-signup.png' !default;
 		min-height: 35em;
 
 		// fix for plans, same as in subscription flow
-		&:not(.mw50e) {
+		&:not(.mw48r) {
 			max-width: 150rem;
 		}
 

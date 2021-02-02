@@ -7,6 +7,7 @@ import { classnames, getAppVersion } from '../../helpers';
 
 import { PublicTopBanners } from '../topBanners';
 import { Href, Icon, ProtonLogo } from '../../components';
+import { AccountSupportDropdown } from '../heading';
 
 import PublicLanguageSelect from './PublicLanguageSelect';
 
@@ -16,14 +17,13 @@ export interface Props {
     children: ReactNode;
     title: string;
     subtitle?: string;
-    right?: ReactNode;
     left?: ReactNode;
     center?: ReactNode;
     larger?: boolean;
     locales?: TtagLocaleMap;
 }
 
-const AccountPublicLayout = ({ children, title, subtitle, larger, left, center, right, locales }: Props) => {
+const AccountPublicLayout = ({ children, title, subtitle, larger, left, center, locales }: Props) => {
     const { APP_VERSION, APP_VERSION_DISPLAY } = useConfig();
     const termsLink = (
         <Href key="terms" className="signup-footer-link" href="https://protonmail.com/terms-and-conditions">{c('Link')
@@ -55,7 +55,7 @@ const AccountPublicLayout = ({ children, title, subtitle, larger, left, center, 
                         <div
                             className={classnames([
                                 'center bg-white-dm color-global-grey-dm onmobile-pb1 w100 mw100 bordered-container flex-item-noshrink flex flex-nowrap signup-container',
-                                larger ? '' : 'mw50e',
+                                larger ? '' : 'mw48r',
                             ])}
                         >
                             <main className="onmobile-p1 flex-item-fluid signLayout-main flex-noMinChildren flex-column flex-nowrap">
@@ -72,8 +72,10 @@ const AccountPublicLayout = ({ children, title, subtitle, larger, left, center, 
                                     {subtitle ? <div className="mb1">{subtitle}</div> : null}
                                     {children}
                                 </div>
-                                <footer className="flex flex-items-center flex-nowrap">
-                                    <span className="flex-item-fluid alignright">{right}</span>
+                                <footer className="flex flex-items-center flex-nowrap flex-item-noshrink">
+                                    <AccountSupportDropdown noCaret className="link">
+                                        {c('Action').t`Need help?`}
+                                    </AccountSupportDropdown>
                                 </footer>
                             </main>
                         </div>
