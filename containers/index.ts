@@ -13,7 +13,6 @@ export * from './contacts';
 export * from './themes';
 export * from './labels';
 export * from './addresses';
-export * from './signup';
 export * from './filters';
 export * from './paymentMethods';
 export * from './eventManager';

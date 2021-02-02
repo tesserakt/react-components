@@ -10,7 +10,12 @@ import { Address, User as tsUser, UserSettings as tsUserSettings } from 'proton-
 import { TtagLocaleMap } from 'proton-shared/lib/interfaces/Locale';
 import { getIs401Error } from 'proton-shared/lib/api/helpers/apiErrorHelper';
 import { getBrowserLocale, getClosestLocaleCode } from 'proton-shared/lib/i18n/helper';
-import { REQUIRES_INTERNAL_EMAIL_ADDRESS, REQUIRES_NONDELINQUENT, UNPAID_STATE } from 'proton-shared/lib/constants';
+import {
+    APPS,
+    REQUIRES_INTERNAL_EMAIL_ADDRESS,
+    REQUIRES_NONDELINQUENT,
+    UNPAID_STATE,
+} from 'proton-shared/lib/constants';
 import { getHasOnlyExternalAddresses } from 'proton-shared/lib/helpers/address';
 
 import { useApi, useCache, useConfig, useErrorHandler } from '../../hooks';
@@ -26,9 +31,9 @@ import loadEventID from './loadEventID';
 import LoaderPage from './LoaderPage';
 import StandardLoadError from './StandardLoadError';
 import KeyBackgroundManager from './KeyBackgroundManager';
-import InternalEmailAddressGeneration from './InternalEmailAddressGeneration';
 import StorageListener from './StorageListener';
 import DelinquentContainer from './DelinquentContainer';
+import { useAppLink } from '../../components';
 
 interface Props<T, M extends Model<T>, E, EvtM extends Model<E>> {
     locales?: TtagLocaleMap;
@@ -65,9 +70,9 @@ const StandardPrivateApp = <T, M extends Model<T>, E, EvtM extends Model<E>>({
     const silentApi = <T,>(config: any) => normalApi<T>({ ...config, silence: true });
     const cache = useCache();
     const errorHandler = useErrorHandler();
-    const onceRef = useRef<{ externalEmailAddress: Address } | undefined>();
     const appRef = useRef<FunctionComponent | null>(null);
     const hasDelinquentBlockRef = useRef(false);
+    const appLink = useAppLink();
 
     useEffect(() => {
         const eventManagerPromise = loadEventID(silentApi, cache).then((eventID) => {
@@ -82,15 +87,13 @@ const StandardPrivateApp = <T, M extends Model<T>, E, EvtM extends Model<E>>({
         const hasInternalEmailAddressRequirement = REQUIRES_INTERNAL_EMAIL_ADDRESS.includes(APP_NAME);
 
         const addressesPromise = hasInternalEmailAddressRequirement
-            ? loadModels([AddressesModel], loadModelsArgs).then((result: any) => {
-                  const [Addresses] = result as [Address[]];
-                  if (Addresses?.length && getHasOnlyExternalAddresses(Addresses)) {
-                      onceRef.current = {
-                          externalEmailAddress: Addresses[0],
-                      };
-                  }
-              })
+            ? loadModels([AddressesModel], loadModelsArgs)
             : undefined;
+
+        const hasOnlyExternalAddressesPromise = addressesPromise?.then((result: any) => {
+            const [Addresses] = result as [Address[]];
+            return hasInternalEmailAddressRequirement && Addresses?.length && getHasOnlyExternalAddresses(Addresses);
+        });
 
         const models = unique([UserSettingsModel, UserModel, ...preloadModels]);
         const filteredModels = addressesPromise ? models.filter((model) => model !== AddressesModel) : models;
@@ -115,6 +118,7 @@ const StandardPrivateApp = <T, M extends Model<T>, E, EvtM extends Model<E>>({
         });
 
         Promise.all([
+            hasOnlyExternalAddressesPromise,
             eventManagerPromise,
             modelsPromise,
             addressesPromise,
@@ -122,8 +126,12 @@ const StandardPrivateApp = <T, M extends Model<T>, E, EvtM extends Model<E>>({
             loadOpenPGP(openpgpConfig),
             appPromise,
         ])
-            .then(() => {
-                setLoading(false);
+            .then(([hasOnlyExternalAddresses]) => {
+                if (hasOnlyExternalAddresses) {
+                    appLink('/setup-internal-address', APPS.PROTONACCOUNT);
+                } else {
+                    setLoading(false);
+                }
             })
             .catch((e) => {
                 if (getIs401Error(e)) {
@@ -165,16 +173,14 @@ const StandardPrivateApp = <T, M extends Model<T>, E, EvtM extends Model<E>>({
                 <ThemeInjector />
                 <DensityInjector />
                 {!noModals && <ModalsChildren />}
-                <InternalEmailAddressGeneration externalEmailAddress={onceRef.current?.externalEmailAddress}>
-                    <KeyBackgroundManager
-                        hasPrivateMemberKeyGeneration={hasPrivateMemberKeyGeneration}
-                        hasReadableMemberKeyActivation={hasReadableMemberKeyActivation}
-                    />
-                    <StorageListener />
-                    <ForceRefreshProvider>
-                        <LoadedApp />
-                    </ForceRefreshProvider>
-                </InternalEmailAddressGeneration>
+                <KeyBackgroundManager
+                    hasPrivateMemberKeyGeneration={hasPrivateMemberKeyGeneration}
+                    hasReadableMemberKeyActivation={hasReadableMemberKeyActivation}
+                />
+                <StorageListener />
+                <ForceRefreshProvider>
+                    <LoadedApp />
+                </ForceRefreshProvider>
             </ContactProvider>
         </EventManagerProvider>
     );

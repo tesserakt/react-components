@@ -25,9 +25,9 @@ import { getHasV2KeysToUpgrade, upgradeV2KeysHelper } from 'proton-shared/lib/ke
 import { traceError } from 'proton-shared/lib/helpers/sentry';
 import { getMember } from 'proton-shared/lib/api/members';
 import { getApiErrorMessage } from 'proton-shared/lib/api/helpers/apiErrorHelper';
+import { handleSetupAddressKeys } from 'proton-shared/lib/keys/setupAddressKeys';
 
 import { getAuthTypes, handleUnlockKey } from './helper';
-import handleSetupAddressKeys from './handleSetupAddressKeys';
 import { AuthCacheResult, FORM, LoginModel } from './interface';
 import { OnLoginCallback } from '../app/interface';
 import { getLoginErrors, getLoginSetters } from './useLoginHelpers';
