@@ -113,8 +113,6 @@ function getKTMessage(
 const KTModalContact = ({ emailAddress, position, publicKeyKTInfo, contactID, ...rest }: Props) => {
     const { createModal } = useModals();
     const [userKeysList, loadingUserKeys] = useUserKeys();
-    let submit = null;
-    let handleSubmit = () => {};
     const [contact, contactLoading] = useContact(contactID || '');
     const { properties } = useContactProperties({ contact, userKeysList });
     const property = properties?.find((property) => {
@@ -122,8 +120,8 @@ const KTModalContact = ({ emailAddress, position, publicKeyKTInfo, contactID, ..
     });
 
     const isLoading = loadingUserKeys || contactLoading;
-    submit = property && properties ? c('Action').t`Settings` : null;
-    handleSubmit = () => {
+    const submit = property && properties ? c('Action').t`Settings` : null;
+    const handleSubmit = () => {
         if (contactID && property && properties) {
             createModal(
                 <ContactEmailSettingsModal
