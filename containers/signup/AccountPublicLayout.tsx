@@ -16,7 +16,6 @@ export interface Props {
     children: ReactNode;
     title: string;
     subtitle?: string;
-    aside?: ReactNode;
     right?: ReactNode;
     left?: ReactNode;
     center?: ReactNode;
@@ -24,7 +23,7 @@ export interface Props {
     locales?: TtagLocaleMap;
 }
 
-const AccountPublicLayout = ({ children, title, subtitle, aside, larger, left, center, right, locales }: Props) => {
+const AccountPublicLayout = ({ children, title, subtitle, larger, left, center, right, locales }: Props) => {
     const { APP_VERSION, APP_VERSION_DISPLAY } = useConfig();
     const termsLink = (
         <Href key="terms" className="signup-footer-link" href="https://protonmail.com/terms-and-conditions">{c('Link')
@@ -77,11 +76,6 @@ const AccountPublicLayout = ({ children, title, subtitle, aside, larger, left, c
                                     <span className="flex-item-fluid alignright">{right}</span>
                                 </footer>
                             </main>
-                            {aside ? (
-                                <aside className="nomobile bg-global-highlight w33 p2 flex flex-items-center flex-justify-center small m0 signLayout-aside">
-                                    {aside}
-                                </aside>
-                            ) : null}
                         </div>
                     </div>
                     <div className="aligncenter small m0 pt0-5 pb0-5 flex-item-noshrink">

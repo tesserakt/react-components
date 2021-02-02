@@ -16,7 +16,6 @@ import { useApi, useModals, useNotifications, useErrorHandler } from '../../hook
 import AbuseModal from './AbuseModal';
 import { Props as AccountPublicLayoutProps } from '../signup/AccountPublicLayout';
 import BackButton from '../signup/BackButton';
-import OneAccountIllustration from '../illustration/OneAccountIllustration';
 import { getToAppName } from '../signup/helpers/helper';
 import { LoginFlows, OnLoginCallbackArguments } from '../app';
 import useLogin, { Props as UseLoginProps } from './useLogin';
@@ -154,7 +153,6 @@ const AccountLoginContainer = ({ onLogin, onBack, ignoreUnlock = false, Layout, 
             <Layout
                 title={c('Title').t`Sign in`}
                 subtitle={toAppName ? c('Info').t`to continue to ${toAppName}` : undefined}
-                aside={<OneAccountIllustration />}
                 right={null}
                 left={onBack && <BackButton onClick={onBack} />}
             >

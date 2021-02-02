@@ -55,7 +55,6 @@ import handleCreateUser from './helpers/handleCreateUser';
 import handleCreateExternalUser from './helpers/handleCreateExternalUser';
 import createAuthApi from './helpers/authApi';
 import handleSetupAddress from './helpers/handleSetupAddress';
-import OneAccountIllustration from '../illustration/OneAccountIllustration';
 
 interface Props {
     onLogin: OnLoginCallback;
@@ -381,7 +380,6 @@ const AccountSignupContainer = ({ toApp, onLogin, onBack, Layout }: Props) => {
             <Layout
                 title={c('Title').t`Create your Proton Account`}
                 subtitle={toAppName ? c('Info').t`to continue to ${toAppName}` : undefined}
-                aside={<OneAccountIllustration />}
                 left={onBack && <BackButton onClick={onBack} />}
             >
                 <SignupAccountForm
