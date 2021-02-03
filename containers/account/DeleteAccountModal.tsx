@@ -1,12 +1,12 @@
 import React, { useState, useMemo, ChangeEvent } from 'react';
 import { c } from 'ttag';
-import { ACCOUNT_DELETION_REASONS } from 'proton-shared/lib/constants';
+import { ACCOUNT_DELETION_REASONS, APPS } from 'proton-shared/lib/constants';
 import { deleteUser, canDelete, unlockPasswordChanges } from 'proton-shared/lib/api/user';
 import { reportBug } from 'proton-shared/lib/api/reports';
 import { srpAuth } from 'proton-shared/lib/srp';
 import { wait } from 'proton-shared/lib/helpers/promise';
 import isTruthy from 'proton-shared/lib/helpers/isTruthy';
-import { getClientID } from 'proton-shared/lib/apps/helper';
+import { getClientID, getAppName } from 'proton-shared/lib/apps/helper';
 import { getHasTOTPSettingEnabled } from 'proton-shared/lib/settings/twoFactor';
 import { omit } from 'proton-shared/lib/helpers/object';
 
@@ -39,6 +39,8 @@ import {
 interface Props {
     onClose?: () => void;
 }
+
+const calendarAppName = getAppName(APPS.PROTONCALENDAR);
 
 const DeleteAccountModal = ({ onClose, ...rest }: Props) => {
     const { createNotification } = useNotifications();
@@ -161,7 +163,8 @@ const DeleteAccountModal = ({ onClose, ...rest }: Props) => {
             </Alert>
             <Alert type="warning">
                 <div className="bold uppercase">{c('Info').t`Warning: This also deletes all connected services`}</div>
-                <div>{c('Info').t`Example: ProtonMail, ProtonContacts, ProtonVPN, ProtonDrive, Proton Calendar`}</div>
+                <div>{c('Info')
+                    .t`Example: ProtonMail, ProtonContacts, ProtonVPN, ProtonDrive, ${calendarAppName}`}</div>
             </Alert>
             <Row>
                 <Label htmlFor="reason">{c('Label').t`What is the main reason you are deleting your account?`}</Label>
