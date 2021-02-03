@@ -32,9 +32,9 @@ const ContactPgpSettings = ({ model, setModel, mailSettings, ktConfig }: Props) 
         !model.publicKeys.pinnedKeys.some((publicKey) => getIsValidForSending(publicKey.getFingerprint(), model));
     const askForPinning = hasPinnedKeys && hasApiKeys && (noPinnedKeyCanSend || !isPrimaryPinned);
 
-    let ktParagraph;
+    let ktParagraph: string | undefined;
     let ktAlertType: 'success' | 'error' | 'warning' | undefined;
-    if (ktConfig && Object.getOwnPropertyNames(ktConfig).length) {
+    if (ktConfig) {
         switch (ktConfig.code) {
             case KT_STATUS.KT_PASSED:
                 ktParagraph = c('Info').t`We verified that the public keys below are in Key Transparency.
@@ -144,7 +144,7 @@ const ContactPgpSettings = ({ model, setModel, mailSettings, ktConfig }: Props) 
                 <Alert type="error" learnMore="https://protonmail.com/support/knowledge-base/how-to-use-pgp/">{c('Info')
                     .t`All uploaded keys are expired or revoked! Encryption is automatically disabled.`}</Alert>
             )}
-            {ktConfig && ktConfig.code && ktParagraph && ktAlertType && (
+            {ktParagraph && ktAlertType && (
                 <Alert type={ktAlertType} learnMore="https://protonmail.com/support/knowledge-base/key-transparency/">
                     {ktParagraph}
                 </Alert>
